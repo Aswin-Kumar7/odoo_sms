@@ -320,3 +320,13 @@ body {
     transform: none;
   }
 }
+
+/* Browser autofill paints saved fields grey-blue; keep them looking like normal inputs in both themes */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-surface) inset;
+  -webkit-text-fill-color: var(--color-slate-900);
+  caret-color: var(--color-slate-900);
+  transition: background-color 9999s ease-out 0s;
+}
