@@ -5,7 +5,7 @@ import { paging } from "../../lib/http.js";
 import { addDays, today } from "../../lib/dates.js";
 import { periodIndex, periodStart, termEnd } from "../../lib/periods.js";
 import { logActivity } from "../../lib/activity.js";
-import { priceLines, type PricingLine } from "../pricing/engine.js";
+import { priceWithDiscounts, type PricingLine } from "../pricing/engine.js";
 import { availableActions, checkTransition, EDITABLE_STATUSES, TransitionError, type Action, type Actor } from "./stateMachine.js";
 
 type Tx = Prisma.TransactionClient;
@@ -34,6 +34,7 @@ const detailInclude = {
       tax: { select: { id: true, name: true, rateBp: true } },
     },
   },
+  discounts: { orderBy: { attachedAt: "asc" as const }, include: { discount: { include: { product: { select: { id: true, name: true } } } } } },
   invoices: {
     orderBy: { periodStart: "desc" as const },
     take: 24,
@@ -67,6 +68,16 @@ export function buildPricingLines(sub: Pick<SubscriptionDetail, "plan" | "lines"
     });
   }
   return lines;
+}
+
+/**
+ * Date the next invoice will be priced on: the billing cursor once active, otherwise the
+ * first billing date (start date, or today if that has passed). Discounts are judged on it.
+ */
+export function pricingDate(sub: Pick<SubscriptionDetail, "status" | "nextBillingDate" | "startDate">): Date {
+  if (sub.status === "ACTIVE" && sub.nextBillingDate) return sub.nextBillingDate;
+  const t = today();
+  return sub.startDate > t ? sub.startDate : t;
 }
 
 function transitionContext(sub: SubscriptionDetail) {
@@ -103,7 +114,8 @@ export async function getSubscription(id: number, actor: Actor = "staff", custom
   if (customerId !== undefined && sub.customerId !== customerId) throw notFound("Subscription");
   return {
     ...sub,
-    totals: priceLines(buildPricingLines(sub)),
+    pricedOn: pricingDate(sub),
+    totals: priceWithDiscounts(buildPricingLines(sub), sub.discounts.map((sd) => sd.discount), pricingDate(sub)),
     actions: availableActions(transitionContext(sub), actor),
     editable: EDITABLE_STATUSES.includes(sub.status),
     timeline,
@@ -388,4 +400,69 @@ export async function transition(
     await logActivity(tx, { entityType: "subscription", entityId: id, action, fromStatus: sub.status, toStatus: to, userId: opts.userId, meta });
   });
   return getSubscription(id, actor, opts.customerId);
+}
+
+// ───────────────────────── Discounts on a subscription ─────────────────────────
+
+/** Attaching a discount means it applies to every future invoice while it stays valid. */
+export async function attachDiscount(id: number, discountId: number, userId: number) {
+  const [sub, discount] = await Promise.all([
+    prisma.subscription.findUnique({ where: { id }, select: { status: true } }),
+    prisma.discount.findUnique({ where: { id: discountId } }),
+  ]);
+  if (!sub) throw notFound("Subscription");
+  if (sub.status === "CLOSED") throw businessRule("Discounts cannot be added to a closed subscription");
+  if (!discount || !discount.isActive) throw businessRule("Discount not found or inactive");
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.subscriptionDiscount.create({ data: { subscriptionId: id, discountId, attachedById: userId } });
+      await logActivity(tx, { entityType: "subscription", entityId: id, action: "discount_attached", userId, meta: { code: discount.code } });
+    });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") throw conflict("This discount is already on the subscription");
+    throw err;
+  }
+  return getSubscription(id);
+}
+
+export async function detachDiscount(id: number, discountId: number, userId: number) {
+  const link = await prisma.subscriptionDiscount.findUnique({
+    relationLoadStrategy: "join",
+    where: { subscriptionId_discountId: { subscriptionId: id, discountId } },
+    include: { discount: { select: { code: true } } },
+  });
+  if (!link) throw notFound("Discount on this subscription");
+  await prisma.$transaction(async (tx) => {
+    await tx.subscriptionDiscount.delete({ where: { subscriptionId_discountId: { subscriptionId: id, discountId } } });
+    await logActivity(tx, { entityType: "subscription", entityId: id, action: "discount_removed", userId, meta: { code: link.discount.code } });
+  });
+  return getSubscription(id);
+}
+
+// ───────────────────────── Pricing preview ─────────────────────────
+
+/** Prices unsaved lines with the same engine and rules used for invoices — nothing is written. */
+export async function previewPricing(input: { planId: number; lines: LineInput[]; discountIds?: number[]; asOf?: Date }) {
+  const [plan, catalogue, taxes, discounts] = await Promise.all([
+    prisma.recurringPlan.findUnique({ relationLoadStrategy: "join", where: { id: input.planId }, include: { tax: true } }),
+    loadCatalogueFor(input.lines),
+    prisma.tax.findMany({ where: { isActive: true }, select: { id: true, rateBp: true } }),
+    input.discountIds?.length ? prisma.discount.findMany({ where: { id: { in: input.discountIds } } }) : Promise.resolve([]),
+  ]);
+  if (!plan) throw businessRule("Plan not found");
+  const rate = new Map(taxes.map((t) => [t.id, t.rateBp]));
+  const resolved = resolveLines(input.lines, catalogue, plan.minQuantity, plan.name);
+  const lines: PricingLine[] = [
+    ...(plan.price > 0 ? [{ key: "plan", productId: null, description: `${plan.name} plan fee`, quantity: 1, unitPrice: plan.price, taxRateBp: plan.tax?.rateBp ?? 0 }] : []),
+    ...resolved.map((l, i) => ({
+      key: `new:${i}`,
+      productId: l.productId,
+      description: l.description,
+      quantity: l.quantity,
+      unitPrice: l.unitPrice,
+      taxRateBp: l.taxId ? rate.get(l.taxId) ?? 0 : 0,
+    })),
+  ];
+  return priceWithDiscounts(lines, discounts, input.asOf ?? today());
 }

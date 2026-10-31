@@ -88,6 +88,23 @@ subscriptionsRouter.put(
   }),
 );
 
+subscriptionsRouter.post(
+  "/:id/discounts",
+  ah(async (req, res) => {
+    const { id } = IdParam.parse(req.params);
+    const { discountId } = z.object({ discountId: z.number().int().positive() }).parse(req.body);
+    res.json(await subs.attachDiscount(id, discountId, req.user!.id));
+  }),
+);
+
+subscriptionsRouter.delete(
+  "/:id/discounts/:discountId",
+  ah(async (req, res) => {
+    const { id, discountId } = IdParam.extend({ discountId: z.coerce.number().int().positive() }).parse(req.params);
+    res.json(await subs.detachDiscount(id, discountId, req.user!.id));
+  }),
+);
+
 // State transitions are explicit actions, never a free-form status PATCH: the server owns the state machine.
 subscriptionsRouter.post(
   "/:id/:action",

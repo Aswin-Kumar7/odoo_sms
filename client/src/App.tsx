@@ -15,6 +15,7 @@ import { TaxesPage } from './pages/catalog/TaxesPage'
 import { ProductsPage } from './pages/catalog/ProductsPage'
 import { ProductFormPage } from './pages/catalog/ProductFormPage'
 import { PlansPage } from './pages/catalog/PlansPage'
+import { DiscountsPage } from './pages/catalog/DiscountsPage'
 import { CustomersPage } from './pages/sales/CustomersPage'
 import { TemplatesPage } from './pages/sales/TemplatesPage'
 import { TemplateFormPage } from './pages/sales/TemplateFormPage'
@@ -73,7 +74,7 @@ export default function App() {
         <Route path="/products/:id" element={<ProductFormPage />} />
         <Route path="/plans" element={<PlansPage />} />
         <Route path="/taxes" element={<TaxesPage />} />
-        <Route path="/discounts" element={<Placeholder title="Discounts" />} />
+        <Route path="/discounts" element={<DiscountsPage />} />
         <Route path="/users" element={<RequireAuth roles={['ADMIN']}><UsersPage /></RequireAuth>} />
       </Route>
 

@@ -146,12 +146,42 @@ export interface PricedLine {
   lineTotal: number
 }
 
+export interface DiscountOutcome {
+  discountId: number
+  code: string
+  amount: number
+  reason: string | null
+}
+
 export interface Totals {
   lines: PricedLine[]
   subtotal: number
   discountTotal: number
   taxTotal: number
   total: number
+  discounts?: DiscountOutcome[]
+}
+
+export type DiscountStatus = 'ACTIVE' | 'SCHEDULED' | 'EXPIRED' | 'USED_UP' | 'INACTIVE'
+
+export interface Discount {
+  id: number
+  name: string
+  code: string
+  kind: 'FIXED' | 'PERCENT'
+  value: number
+  scope: 'PRODUCT' | 'SUBSCRIPTION'
+  productId: number | null
+  minPurchase: number | null
+  minQuantity: number | null
+  startsOn: string | null
+  endsOn: string | null
+  usageLimit: number | null
+  usageCount: number
+  isActive: boolean
+  status?: DiscountStatus
+  product?: { id: number; name: string } | null
+  _count?: { subscriptions: number; invoices: number }
 }
 
 export type SubscriptionAction = 'send_quote' | 'confirm' | 'activate' | 'pause' | 'resume' | 'close' | 'cancel' | 'renew'
@@ -199,7 +229,9 @@ export interface Subscription {
   template: { id: number; name: string; validityDays: number } | null
   createdBy: { id: number; name: string } | null
   lines: SubscriptionLine[]
+  discounts: { discountId: number; attachedAt: string; discount: Discount }[]
   invoices: InvoiceSummary[]
+  pricedOn: string
   totals: Totals
   actions: { action: SubscriptionAction; label: string; blockedReason: string | null }[]
   editable: boolean

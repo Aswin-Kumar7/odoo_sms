@@ -15,6 +15,8 @@ import { plansRouter } from "./modules/catalog/plans.routes.js";
 import { customersRouter } from "./modules/customers/customers.routes.js";
 import { templatesRouter } from "./modules/templates/templates.routes.js";
 import { subscriptionsRouter } from "./modules/subscriptions/subscriptions.routes.js";
+import { discountsRouter } from "./modules/discounts/discounts.routes.js";
+import { pricingRouter } from "./modules/pricing/pricing.routes.js";
 
 export function createApp() {
   const app = express();
@@ -45,6 +47,8 @@ export function createApp() {
   api.use("/customers", customersRouter);
   api.use("/templates", templatesRouter);
   api.use("/subscriptions", subscriptionsRouter);
+  api.use("/discounts", discountsRouter);
+  api.use("/pricing", pricingRouter);
   app.use("/api/v1", api);
 
   app.use(notFoundHandler);

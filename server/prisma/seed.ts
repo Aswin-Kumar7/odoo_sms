@@ -37,7 +37,26 @@ async function main() {
   console.log("Seeded users: admin, staff, customer");
 
   await seedCatalogue();
+  await seedDiscounts();
   await seedSales(admin.id, staff.id);
+}
+
+// ───────────── Discounts (upserted by code; usage counts left as they are) ─────────────
+
+async function seedDiscounts() {
+  const crm = await prisma.product.findFirstOrThrow({ where: { name: "Brightloop CRM" } });
+  const inDays = (n: number) => new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() + n));
+  const rules = [
+    { code: "SEATS10", name: "10% off 5 or more CRM seats", kind: "PERCENT", value: 1000, scope: "PRODUCT", productId: crm.id, minQuantity: 5, usageLimit: 2 },
+    { code: "LOYAL500", name: "₹500 off orders over ₹10,000", kind: "FIXED", value: 50000, scope: "SUBSCRIPTION", productId: null, minPurchase: 1000000 },
+    { code: "LAUNCH20", name: "Launch offer: 20% off for a month", kind: "PERCENT", value: 2000, scope: "SUBSCRIPTION", productId: null, startsOn: inDays(-1), endsOn: inDays(30), usageLimit: 100 },
+    { code: "DIWALI15", name: "Festive 15% (ended)", kind: "PERCENT", value: 1500, scope: "SUBSCRIPTION", productId: null, startsOn: inDays(-40), endsOn: inDays(-10) },
+  ] as const;
+  for (const r of rules) {
+    const data = { minPurchase: null, minQuantity: null, startsOn: null, endsOn: null, usageLimit: null, ...r, isActive: true };
+    await prisma.discount.upsert({ where: { code: r.code }, update: data, create: data });
+  }
+  console.log(`Seeded discounts: ${rules.map((r) => r.code).join(", ")}`);
 }
 
 // ───────────── Catalogue (prices in paise) ─────────────
@@ -274,6 +293,22 @@ async function seedSales(adminId: number, staffId: number) {
     );
     for (const step of s.steps) sub = await transition(sub.id, step, { userId: step === "activate" ? adminId : staffId });
     created++;
+  }
+  // Corner Shop has 3 CRM seats, so SEATS10 shows why it doesn't apply; Nimbus qualifies for LOYAL500.
+  const attachments: [string, string][] = [
+    ["Corner Shop Pvt Ltd", "SEATS10"],
+    ["Nimbus Logistics", "LOYAL500"],
+  ];
+  for (const [customerName, code] of attachments) {
+    const sub = await prisma.subscription.findFirst({ where: { customerId: customers[customerName], status: { not: "CLOSED" } }, orderBy: { id: "asc" } });
+    const discount = await prisma.discount.findUnique({ where: { code } });
+    if (sub && discount) {
+      await prisma.subscriptionDiscount.upsert({
+        where: { subscriptionId_discountId: { subscriptionId: sub.id, discountId: discount.id } },
+        update: {},
+        create: { subscriptionId: sub.id, discountId: discount.id, attachedById: staffId },
+      });
+    }
   }
   console.log(`Seeded sales: ${templates.length} templates, ${customerData.length} customers, ${created} new subscriptions`);
 }

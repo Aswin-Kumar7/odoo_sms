@@ -1,18 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useDeferredValue, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Pencil, Plus, Tag, Trash2, X } from 'lucide-react'
 import { api, ApiError } from '../../api/client'
-import { periodLabel, type Product, type Subscription, type SubscriptionAction, type Tax } from '../../api/types'
+import { periodLabel, type Discount, type Product, type Subscription, type SubscriptionAction, type Tax, type Totals } from '../../api/types'
 import { useActivePlans, useActiveProducts, useActiveTaxes } from '../../api/lookups'
 import { Badge, Button, Card, ErrorState, Field, Input, Modal, PageHeader, Select, Spinner, Table, Td, Textarea } from '../../components/ui'
 import { StatusStepper, Timeline, TotalsTable } from '../../components/subscription'
 import { applyServerError } from '../../lib/forms'
 import { date, money, toMajor, toMinor } from '../../lib/format'
+import { discountConditions, discountValue } from '../../lib/discounts'
 
 const NEEDS_REASON: SubscriptionAction[] = ['close', 'cancel']
 const DANGER: SubscriptionAction[] = ['close', 'cancel']
@@ -183,6 +184,7 @@ export function SubscriptionDetailPage() {
             </dl>
             {s.notes && <p className="mt-3 rounded bg-slate-50 p-2 text-sm text-slate-600">{s.notes}</p>}
           </Card>
+          <DiscountsPanel sub={s} onSaved={setDetail} />
           <Card title="Timeline">
             <Timeline entries={s.timeline} />
           </Card>
@@ -396,6 +398,31 @@ function LinesForm({
   } = useForm<LinesForm>({ resolver: zodResolver(linesSchema), defaultValues: toForm(sub) })
   const lines = useFieldArray({ control, name: 'lines' })
 
+  // Live totals for unsaved edits, from the same engine the server uses for invoices.
+  const watched = useDeferredValue(JSON.stringify(watch('lines')))
+  const previewBody = (() => {
+    const ls = (JSON.parse(watched) as LinesForm['lines']).filter((l) => l.productId && Number(l.quantity) >= 1)
+    return {
+      planId: sub.planId,
+      asOf: sub.pricedOn.slice(0, 10),
+      discountIds: sub.discounts.map((d) => d.discountId),
+      lines: ls.map((l) => ({
+        productId: Number(l.productId),
+        variantId: l.variantId ? Number(l.variantId) : null,
+        quantity: Number(l.quantity),
+        unitPrice: toMinor(Number(l.unitPrice) || 0),
+        taxId: l.taxId ? Number(l.taxId) : null,
+      })),
+    }
+  })()
+  const preview = useQuery({
+    queryKey: ['pricing-preview', previewBody],
+    queryFn: () => api.post<Totals>('/pricing/preview', previewBody),
+    enabled: isDirty,
+    retry: false,
+    staleTime: 30_000,
+  })
+
   useEffect(() => reset(toForm(sub)), [sub.version]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => onStateChange({ dirty: isDirty, saving: isSubmitting }), [isDirty, isSubmitting, onStateChange])
   useEffect(() => () => onStateChange({ dirty: false, saving: false }), [onStateChange])
@@ -528,7 +555,97 @@ function LinesForm({
           })}
         </div>
       )}
-      {isDirty && <p className="mt-3 text-xs text-slate-500">Unsaved changes. Totals update after saving.</p>}
+      {isDirty && (
+        <div className="mt-4 rounded-md border border-dashed border-brand-500/40 bg-brand-50/40 p-3 text-sm">
+          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-brand-700">Preview — not saved yet</p>
+          {preview.isError ? (
+            <p className="text-xs text-red-600">{(preview.error as Error).message}</p>
+          ) : preview.data ? (
+            <p className="text-slate-700">
+              Subtotal {money(preview.data.subtotal)}
+              {preview.data.discountTotal > 0 && <span className="text-emerald-700"> − discounts {money(preview.data.discountTotal)}</span>} + tax {money(preview.data.taxTotal)} ={' '}
+              <span className="font-semibold">{money(preview.data.total)}</span> per period
+            </p>
+          ) : (
+            <p className="text-xs text-slate-500">Calculating…</p>
+          )}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+// ───────────────────────── Discounts ─────────────────────────
+
+function DiscountsPanel({ sub, onSaved }: { sub: Subscription; onSaved: (s: Subscription) => void }) {
+  const [adding, setAdding] = useState('')
+  const all = useQuery({ queryKey: ['discounts'], queryFn: () => api.get<{ data: Discount[] }>('/discounts').then((r) => r.data), staleTime: 30_000 })
+  const attachedIds = new Set(sub.discounts.map((d) => d.discountId))
+  const available = all.data?.filter((d) => d.status === 'ACTIVE' && !attachedIds.has(d.id)) ?? []
+  const outcome = new Map(sub.totals.discounts?.map((o) => [o.discountId, o]))
+  const closed = sub.status === 'CLOSED'
+
+  const attach = useMutation({
+    mutationFn: (discountId: number) => api.post<Subscription>(`/subscriptions/${sub.id}/discounts`, { discountId }),
+    onSuccess: (s) => {
+      onSaved(s)
+      setAdding('')
+      toast.success('Discount added — it will appear on the next invoice')
+    },
+    onError: (e) => applyServerError(e),
+  })
+  const detach = useMutation({
+    mutationFn: (discountId: number) => api.del<Subscription>(`/subscriptions/${sub.id}/discounts/${discountId}`),
+    onSuccess: (s) => {
+      onSaved(s)
+      toast.success('Discount removed')
+    },
+    onError: (e) => applyServerError(e),
+  })
+
+  return (
+    <Card title="Discounts">
+      {sub.discounts.length === 0 ? (
+        <p className="text-sm text-slate-500">No discounts on this subscription.</p>
+      ) : (
+        <ul className="space-y-2">
+          {sub.discounts.map(({ discount: d }) => {
+            const o = outcome.get(d.id)
+            return (
+              <li key={d.id} className="flex items-start justify-between gap-2 rounded-md border border-slate-200 p-2">
+                <div className="min-w-0">
+                  <p className="flex items-center gap-1.5 text-sm font-medium text-slate-800">
+                    <Tag className="h-3.5 w-3.5 text-brand-600" /> <span className="font-mono text-xs">{d.code}</span> {discountValue(d)}
+                  </p>
+                  <p className="text-xs text-slate-500">{discountConditions(d)}</p>
+                  {o && (o.reason ? <p className="text-xs text-amber-700">Not applied: {o.reason}</p> : <p className="text-xs text-emerald-700">Saves {money(o.amount)} on the next invoice</p>)}
+                </div>
+                {!closed && (
+                  <button className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label={`Remove ${d.code}`} onClick={() => detach.mutate(d.id)} disabled={detach.isPending}>
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      {!closed && (
+        <div className="mt-3 flex gap-2">
+          <Select value={adding} onChange={(e) => setAdding(e.target.value)} disabled={!available.length}>
+            <option value="">{available.length ? 'Add a discount…' : 'No other active discounts'}</option>
+            {available.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.code} — {discountValue(d)}
+              </option>
+            ))}
+          </Select>
+          <Button variant="secondary" disabled={!adding} loading={attach.isPending} onClick={() => attach.mutate(Number(adding))}>
+            Add
+          </Button>
+        </div>
+      )}
+      <p className="mt-2 text-xs text-slate-400">Judged on {date(sub.pricedOn)}, the date of the next invoice.</p>
     </Card>
   )
 }
