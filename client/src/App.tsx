@@ -1,3 +1,4 @@
+import { lazy, type ComponentType } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { AppLayout } from './layouts/AppLayout'
 import { PortalLayout } from './layouts/PortalLayout'
@@ -5,29 +6,38 @@ import { AuthLayout } from './layouts/AuthLayout'
 import { GuestOnly, RequireAuth } from './auth/guards'
 import { homeFor, useAuth } from './auth/AuthContext'
 import { Spinner } from './components/ui'
-import { Placeholder } from './pages/Placeholder'
 import { LoginPage } from './pages/auth/LoginPage'
 import { SignupPage } from './pages/auth/SignupPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
-import { UsersPage } from './pages/admin/UsersPage'
-import { TaxesPage } from './pages/catalog/TaxesPage'
-import { ProductsPage } from './pages/catalog/ProductsPage'
-import { ProductFormPage } from './pages/catalog/ProductFormPage'
-import { PlansPage } from './pages/catalog/PlansPage'
-import { DiscountsPage } from './pages/catalog/DiscountsPage'
-import { InvoicesPage } from './pages/billing/InvoicesPage'
-import { InvoiceDetailPage } from './pages/billing/InvoiceDetailPage'
-import { BillingPage } from './pages/billing/BillingPage'
-import { PaymentsPage } from './pages/billing/PaymentsPage'
-import { PortalSubscriptionDetailPage, PortalSubscriptionsPage } from './pages/portal/PortalSubscriptionsPage'
-import { PortalInvoiceDetailPage, PortalInvoicesPage } from './pages/portal/PortalInvoicesPage'
-import { CustomersPage } from './pages/sales/CustomersPage'
-import { TemplatesPage } from './pages/sales/TemplatesPage'
-import { TemplateFormPage } from './pages/sales/TemplateFormPage'
-import { SubscriptionsPage } from './pages/sales/SubscriptionsPage'
-import { NewSubscriptionPage } from './pages/sales/NewSubscriptionPage'
-import { SubscriptionDetailPage } from './pages/sales/SubscriptionDetailPage'
+
+// Pages load on first visit, so signing in doesn't download every screen (and the charting
+// library) up front. The layouts show a spinner while a page's code arrives.
+function page<K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) {
+  return lazy(() => load().then((m) => ({ default: m[name] })))
+}
+
+const DashboardPage = page(() => import('./pages/DashboardPage'), 'DashboardPage')
+const UsersPage = page(() => import('./pages/admin/UsersPage'), 'UsersPage')
+const TaxesPage = page(() => import('./pages/catalog/TaxesPage'), 'TaxesPage')
+const ProductsPage = page(() => import('./pages/catalog/ProductsPage'), 'ProductsPage')
+const ProductFormPage = page(() => import('./pages/catalog/ProductFormPage'), 'ProductFormPage')
+const PlansPage = page(() => import('./pages/catalog/PlansPage'), 'PlansPage')
+const DiscountsPage = page(() => import('./pages/catalog/DiscountsPage'), 'DiscountsPage')
+const InvoicesPage = page(() => import('./pages/billing/InvoicesPage'), 'InvoicesPage')
+const InvoiceDetailPage = page(() => import('./pages/billing/InvoiceDetailPage'), 'InvoiceDetailPage')
+const BillingPage = page(() => import('./pages/billing/BillingPage'), 'BillingPage')
+const PaymentsPage = page(() => import('./pages/billing/PaymentsPage'), 'PaymentsPage')
+const PortalSubscriptionDetailPage = page(() => import('./pages/portal/PortalSubscriptionsPage'), 'PortalSubscriptionDetailPage')
+const PortalSubscriptionsPage = page(() => import('./pages/portal/PortalSubscriptionsPage'), 'PortalSubscriptionsPage')
+const PortalInvoiceDetailPage = page(() => import('./pages/portal/PortalInvoicesPage'), 'PortalInvoiceDetailPage')
+const PortalInvoicesPage = page(() => import('./pages/portal/PortalInvoicesPage'), 'PortalInvoicesPage')
+const CustomersPage = page(() => import('./pages/sales/CustomersPage'), 'CustomersPage')
+const TemplatesPage = page(() => import('./pages/sales/TemplatesPage'), 'TemplatesPage')
+const TemplateFormPage = page(() => import('./pages/sales/TemplateFormPage'), 'TemplateFormPage')
+const SubscriptionsPage = page(() => import('./pages/sales/SubscriptionsPage'), 'SubscriptionsPage')
+const NewSubscriptionPage = page(() => import('./pages/sales/NewSubscriptionPage'), 'NewSubscriptionPage')
+const SubscriptionDetailPage = page(() => import('./pages/sales/SubscriptionDetailPage'), 'SubscriptionDetailPage')
 
 function BackOffice() {
   const { user, logout } = useAuth()
@@ -66,7 +76,7 @@ export default function App() {
       </Route>
 
       <Route element={<BackOffice />}>
-        <Route path="/dashboard" element={<Placeholder title="Dashboard" />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/subscriptions" element={<SubscriptionsPage />} />
         <Route path="/subscriptions/new" element={<NewSubscriptionPage />} />
         <Route path="/subscriptions/:id" element={<SubscriptionDetailPage />} />

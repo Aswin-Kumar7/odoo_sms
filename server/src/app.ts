@@ -21,6 +21,7 @@ import { invoicesRouter } from "./modules/invoices/invoices.routes.js";
 import { billingRouter } from "./modules/billing/billing.routes.js";
 import { paymentsRouter } from "./modules/payments/payments.routes.js";
 import { portalRouter } from "./modules/portal/portal.routes.js";
+import { reportsRouter } from "./modules/reports/reports.routes.js";
 
 export function createApp() {
   const app = express();
@@ -57,6 +58,7 @@ export function createApp() {
   api.use("/billing", billingRouter);
   api.use("/payments", paymentsRouter);
   api.use("/portal", portalRouter);
+  api.use("/reports", reportsRouter);
   app.use("/api/v1", api);
 
   app.use(notFoundHandler);

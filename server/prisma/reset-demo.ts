@@ -1,6 +1,6 @@
 // Wipes all business data and re-seeds the demo set. The schema and migrations are kept.
 // Destructive by design, so it refuses to run without --yes and never in production.
-//   npm run db:reset-demo -- --yes
+//   npm run db:reset-demo -- --yes            (add --perf to also load the bulk performance data)
 import "dotenv/config";
 import { execSync } from "node:child_process";
 import { PrismaClient } from "@prisma/client";
@@ -29,6 +29,7 @@ async function main() {
 main()
   .then(() => prisma.$disconnect())
   .then(() => execSync("npm run seed", { stdio: "inherit" }))
+  .then(() => process.argv.includes("--perf") && execSync("npm run seed:perf", { stdio: "inherit" }))
   .catch(async (e) => {
     console.error(e);
     await prisma.$disconnect();

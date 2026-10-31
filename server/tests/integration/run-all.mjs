@@ -6,7 +6,7 @@ import { dirname, join } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
 let failed = 0;
-for (const suite of ["subscriptions.mjs", "discounts.mjs", "billing.mjs", "payments.mjs"]) {
+for (const suite of ["subscriptions.mjs", "discounts.mjs", "billing.mjs", "payments.mjs", "reports.mjs"]) {
   const r = spawnSync(process.execPath, [join(here, suite)], { encoding: "utf8" });
   const out = (r.stdout ?? "") + (r.stderr ?? "");
   const pass = (out.match(/^PASS/gm) ?? []).length;

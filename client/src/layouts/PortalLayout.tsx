@@ -1,5 +1,7 @@
+import { Suspense } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { clsx } from 'clsx'
+import { Spinner } from '../components/ui'
 
 export function PortalLayout({ userName, onLogout }: { userName?: string; onLogout?: () => void }) {
   const link = ({ isActive }: { isActive: boolean }) =>
@@ -34,7 +36,9 @@ export function PortalLayout({ userName, onLogout }: { userName?: string; onLogo
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-6">
-        <Outlet />
+        <Suspense fallback={<Spinner />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   )

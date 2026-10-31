@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { clsx } from 'clsx'
+import { Spinner } from '../components/ui'
 import {
   BarChart3,
   Boxes,
@@ -139,7 +140,9 @@ export function AppLayout({ role = 'ADMIN', userName, onLogout }: { role?: Role;
           <span className="font-semibold text-slate-900">Brightloop</span>
         </header>
         <main className="min-w-0 flex-1 px-4 py-6 md:px-8">
+          <Suspense fallback={<Spinner />}>
           <Outlet />
+        </Suspense>
         </main>
       </div>
     </div>
