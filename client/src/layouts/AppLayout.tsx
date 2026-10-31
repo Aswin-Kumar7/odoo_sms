@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { Spinner } from '../components/ui'
 import { Logo, ThemeSwitcher } from '../components/brand'
+import { GlobalSearch } from '../components/GlobalSearch'
 
 export type Role = 'ADMIN' | 'STAFF' | 'CUSTOMER'
 
@@ -65,6 +66,15 @@ const NAV: { section: string; items: NavItem[] }[] = [
   },
 ]
 
+/** Section and page for the top bar, from the menu itself. */
+function trail(pathname: string) {
+  for (const { section, items } of NAV) {
+    const hit = items.find((i) => pathname === i.to || pathname.startsWith(i.to + '/'))
+    if (hit) return { section, page: hit.label, detail: pathname !== hit.to }
+  }
+  return null
+}
+
 const initials = (name?: string) =>
   (name ?? '?')
     .split(/\s+/)
@@ -95,7 +105,7 @@ function SidebarContent({ role, userName, onLogout, onNavigate }: { role: Role; 
                       clsx(
                         'flex h-8 items-center gap-2.5 rounded-lg border px-2.5 text-sm transition-colors duration-150',
                         isActive
-                          ? 'border-line bg-surface font-medium text-slate-900 shadow-[0_1px_2px_rgb(0_0_0/0.05)] dark:bg-slate-100 dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.05)]'
+                          ? 'border-transparent bg-brand-50 font-medium text-brand-700 dark:border-line dark:bg-slate-100 dark:text-slate-900 dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.05)]'
                           : 'border-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900',
                       )
                     }
@@ -133,12 +143,30 @@ function SidebarContent({ role, userName, onLogout, onNavigate }: { role: Role; 
   )
 }
 
+function TopTrail({ pathname }: { pathname: string }) {
+  const t = trail(pathname)
+  if (!t) return null
+  return (
+    <p className="flex min-w-0 items-center gap-2 text-sm whitespace-nowrap">
+      <span className="text-slate-500">{t.section}</span>
+      <span className="text-slate-300">/</span>
+      <span className={t.detail ? 'text-slate-500' : 'font-medium text-slate-900'}>{t.page}</span>
+      {t.detail && (
+        <>
+          <span className="text-slate-300">/</span>
+          <span className="font-medium text-slate-900">Details</span>
+        </>
+      )}
+    </p>
+  )
+}
+
 export function AppLayout({ role = 'ADMIN', userName, onLogout }: { role?: Role; userName?: string; onLogout?: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const { pathname } = useLocation()
   return (
     <div className="flex min-h-full">
-      <aside className="no-print sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-line bg-sunken md:flex">
+      <aside className="no-print sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-line bg-surface md:flex dark:bg-sunken">
         <SidebarContent role={role} userName={userName} onLogout={onLogout} />
       </aside>
 
@@ -146,7 +174,7 @@ export function AppLayout({ role = 'ADMIN', userName, onLogout }: { role?: Role;
       {menuOpen && (
         <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true">
           <div className="absolute inset-0 bg-black/40" onClick={() => setMenuOpen(false)} />
-          <aside className="animate-rise relative flex h-full w-[272px] flex-col border-r border-line bg-sunken">
+          <aside className="animate-rise relative flex h-full w-[272px] flex-col border-r border-line bg-surface dark:bg-sunken">
             <button onClick={() => setMenuOpen(false)} className="absolute top-4 right-3 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100" aria-label="Close menu">
               <X className="h-5 w-5" />
             </button>
@@ -162,6 +190,15 @@ export function AppLayout({ role = 'ADMIN', userName, onLogout }: { role?: Role;
           </button>
           <Logo />
         </header>
+        <div className="no-print border-b border-line bg-surface px-4 py-2 md:hidden">
+          <GlobalSearch />
+        </div>
+        <div className="no-print sticky top-0 z-30 hidden h-14 items-center gap-6 border-b border-line bg-slate-50/85 px-6 backdrop-blur md:flex lg:px-10">
+          <TopTrail pathname={pathname} />
+          <div className="ml-auto flex w-full max-w-[420px] justify-end">
+            <GlobalSearch />
+          </div>
+        </div>
         <main className="mx-auto w-full max-w-[1440px] min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-10">
           <Suspense fallback={<Spinner />}>
             <div key={pathname} className="animate-rise">

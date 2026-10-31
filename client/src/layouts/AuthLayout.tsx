@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { Logo, ThemeSwitcher } from '../components/brand'
 import { InvoicePaper } from '../components/InvoicePaper'
+import { LoopArt } from '../components/LoopArt'
 
 export function AuthLayout() {
   const { pathname } = useLocation()
@@ -34,15 +35,11 @@ export function AuthLayout() {
         </div>
       </div>
 
-      <div className="relative hidden overflow-hidden border-l border-line bg-sunken lg:flex lg:items-center lg:justify-center">
-        {/* Ruled lines, like the ledger the invoices come from */}
-        <div
-          className="absolute inset-0 opacity-60"
-          style={{ backgroundImage: 'repeating-linear-gradient(to bottom, transparent 0 31px, var(--color-line) 31px 32px)' }}
-        />
+      <div className="relative hidden overflow-hidden border-l border-cream-line bg-cream lg:flex lg:items-center lg:justify-center">
+        <LoopArt className="pointer-events-none absolute inset-0 h-full w-full opacity-25 [mask-image:radial-gradient(closest-side,#000_70%,transparent)]" />
         <div className="relative flex flex-col items-center">
           <InvoicePaper />
-          <p className="mt-6 max-w-[300px] text-center text-sm text-slate-500">Every period billed once, with tax and discounts worked out, and paid from the portal</p>
+          <p className="mt-6 max-w-[300px] rounded-lg bg-cream/80 px-3 py-1.5 text-center text-sm text-slate-500 backdrop-blur-sm">Every period billed once, with tax and discounts worked out, and paid from the portal</p>
         </div>
       </div>
     </div>

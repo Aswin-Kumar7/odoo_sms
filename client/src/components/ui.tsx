@@ -1,4 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
+import { createPortal } from 'react-dom'
 import { clsx } from 'clsx'
 import { Loader2, X } from 'lucide-react'
 import { humanize } from '../lib/format'
@@ -74,7 +75,7 @@ Textarea.displayName = 'Textarea'
 
 export function Card({ title, actions, children, className }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={clsx('rounded-xl border border-line bg-surface shadow-[0_1px_2px_rgb(0_0_0/0.04)] dark:shadow-none', className)}>
+    <section className={clsx('rounded-xl border border-line bg-surface shadow-card', className)}>
       {(title || actions) && (
         <header className="flex min-h-12 items-center justify-between gap-3 border-b border-line px-5 py-3">
           <h2 className="text-sm font-medium text-slate-900">{title}</h2>
@@ -89,7 +90,7 @@ export function Card({ title, actions, children, className }: { title?: ReactNod
 /** A figure with its label: the building block of every summary row. */
 export function Stat({ label, value, hint, tone, className }: { label: ReactNode; value: ReactNode; hint?: ReactNode; tone?: 'danger' | 'accent'; className?: string }) {
   return (
-    <div className={clsx('rounded-xl border border-line bg-surface p-5 shadow-[0_1px_2px_rgb(0_0_0/0.04)] dark:shadow-none', className)}>
+    <div className={clsx('rounded-xl border border-line bg-surface p-5 shadow-card', className)}>
       <p className="text-[13px] text-slate-500">{label}</p>
       <p className={clsx('mt-2 text-[26px] leading-none font-medium tracking-[-0.01em]', tone === 'danger' ? 'text-red-600' : tone === 'accent' ? 'text-brand-600' : 'text-slate-900')}>{value}</p>
       {hint && <p className="mt-2 font-mono text-xs text-slate-500">{hint}</p>}
@@ -177,25 +178,30 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
 
 export function Modal({ open, title, onClose, children, footer }: { open: boolean; title: string; onClose: () => void; children: ReactNode; footer?: ReactNode }) {
   if (!open) return null
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 dark:bg-black/60" onMouseDown={onClose}>
-      <div
-        className="animate-rise w-full max-w-lg rounded-2xl border border-line bg-surface shadow-[0_24px_64px_rgb(0_0_0/0.18)]"
-        onMouseDown={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-      >
-        <header className="flex items-center justify-between px-6 pt-5 pb-2">
-          <h3 className="text-base font-medium text-slate-900">{title}</h3>
-          <button onClick={onClose} className="-mr-2 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700" aria-label="Close">
-            <X className="h-4 w-4" />
-          </button>
-        </header>
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-3">{children}</div>
-        {footer && <footer className="flex justify-end gap-2 px-6 pt-3 pb-5">{footer}</footer>}
+  // Portalled to <body> so no transformed ancestor can trap its fixed positioning.
+  return createPortal(
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 dark:bg-black/60" onMouseDown={onClose}>
+      <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
+        <div
+          className="animate-rise flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col rounded-2xl border border-line bg-surface shadow-float sm:max-h-[calc(100dvh-3rem)]"
+          onMouseDown={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.key === 'Escape' && onClose()}
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
+        >
+          <header className="flex shrink-0 items-center justify-between px-6 pt-5 pb-2">
+            <h3 className="text-base font-medium text-slate-900">{title}</h3>
+            <button onClick={onClose} className="-mr-2 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700" aria-label="Close">
+              <X className="h-4 w-4" />
+            </button>
+          </header>
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-3">{children}</div>
+          {footer && <footer className="flex shrink-0 justify-end gap-2 border-t border-line px-6 py-4">{footer}</footer>}
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

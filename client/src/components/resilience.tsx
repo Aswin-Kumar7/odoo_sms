@@ -54,7 +54,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
     if (!this.state.error) return this.props.children
     return (
       <div className="flex min-h-full items-center justify-center p-6">
-        <div className="max-w-md rounded-xl border border-line bg-surface p-8 text-center shadow-[0_1px_2px_rgb(0_0_0/0.04)] dark:shadow-none">
+        <div className="max-w-md rounded-xl border border-line bg-surface p-8 text-center shadow-card">
           <AlertTriangle className="mx-auto h-8 w-8 text-amber-500" />
           <h1 className="mt-3 text-lg font-medium text-slate-900">Something went wrong on this page</h1>
           <p className="mt-1 text-sm text-slate-500">Reloading usually fixes it. Your saved data is safe.</p>

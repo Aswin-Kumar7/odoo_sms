@@ -21,7 +21,7 @@
   --color-brand-700: #5c3d54;
 
   /* Graphite ramp, light */
-  --color-slate-50: #fafafa; /* page */
+  --color-slate-50: #f7f7f8; /* page */
   --color-slate-100: #f3f3f4; /* raised: active row, input fill, chips */
   --color-slate-200: #e6e6e8;
   --color-slate-300: #d4d4d8;
@@ -37,6 +37,14 @@
   --color-line: rgb(23 23 25 / 0.09); /* hairline */
   --color-line-strong: rgb(23 23 25 / 0.16);
   --color-paper: #fbf8f3; /* the invoice "paper" in illustrations */
+
+  /* The landing page leans toward the world: warm paper and ink. */
+  --color-cream: #f5f1ea;
+  --color-cream-raised: #fbf9f5;
+  --color-cream-line: rgb(60 48 36 / 0.1);
+
+  --shadow-card: 0 1px 2px rgb(16 16 20 / 0.05), 0 4px 12px -6px rgb(16 16 20 / 0.08);
+  --shadow-float: 0 1px 2px rgb(16 16 20 / 0.06), 0 24px 48px -16px rgb(40 30 20 / 0.22);
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -60,6 +68,13 @@
   --color-line: rgb(237 237 238 / 0.08);
   --color-line-strong: rgb(237 237 238 / 0.14);
   --color-paper: #f4efe6;
+
+  --color-cream: #121110;
+  --color-cream-raised: #1a1917;
+  --color-cream-line: rgb(239 233 222 / 0.08);
+
+  --shadow-card: 0 0 0 0 transparent;
+  --shadow-float: 0 24px 64px -16px rgb(0 0 0 / 0.6);
 
   --color-brand-50: #2a2028;
   --color-brand-100: #352833;
@@ -153,7 +168,8 @@ body {
   }
 }
 .animate-rise {
-  animation: rise 360ms var(--ease-out) both;
+  /* backwards, not both: a transform left in place would trap position:fixed children */
+  animation: rise 360ms var(--ease-out) backwards;
 }
 @media (prefers-reduced-motion: reduce) {
   .animate-rise {

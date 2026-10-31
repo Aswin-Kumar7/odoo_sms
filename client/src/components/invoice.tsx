@@ -17,7 +17,7 @@ export function InvoiceStatusBadge({ status, overdue }: { status: string; overdu
  */
 export function InvoiceDocument({ inv }: { inv: Omit<Invoice, 'timeline' | 'billingRun'> }) {
   return (
-    <article className="rounded-lg border border-line bg-surface p-6 shadow-[0_1px_2px_rgb(0_0_0/0.04)] dark:shadow-none print:border-0 print:p-0 print:shadow-none">
+    <article className="rounded-lg border border-line bg-surface p-6 shadow-card print:border-0 print:p-0 print:shadow-none">
       <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line pb-4">
         <div>
           <div className="flex items-center gap-2">

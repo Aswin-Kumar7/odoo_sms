@@ -461,13 +461,14 @@ function LinesForm({
       {lines.fields.length === 0 ? (
         <p className="text-sm text-slate-500">No lines yet.</p>
       ) : (
-        <div className="space-y-3">
+        // Laid out by the card's own width (container query): the editor lives in a narrow column.
+        <div className="@container space-y-3">
           {lines.fields.map((field, i) => {
             const product = productById.get(watch(`lines.${i}.productId`))
             const amount = (Number(watch(`lines.${i}.quantity`)) || 0) * (Number(watch(`lines.${i}.unitPrice`)) || 0)
             return (
-              <div key={field.id} className="grid grid-cols-12 items-end gap-2 border-b border-line pb-3 last:border-0">
-                <div className="col-span-12 md:col-span-4">
+              <div key={field.id} className="grid grid-cols-6 items-end gap-3 border-b border-line pb-4 last:border-0 last:pb-0 @4xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1.6fr)_76px_104px_minmax(0,1fr)_auto]">
+                <div className="col-span-6 @md:col-span-3 @4xl:col-span-1">
                   <Field label="Product" error={errors.lines?.[i]?.productId?.message}>
                     <Select
                       {...register(`lines.${i}.productId`, {
@@ -486,7 +487,7 @@ function LinesForm({
                     </Select>
                   </Field>
                 </div>
-                <div className="col-span-6 md:col-span-3">
+                <div className="col-span-6 @md:col-span-3 @4xl:col-span-1">
                   <Field label="Variant">
                     <Select {...register(`lines.${i}.variantId`, { onChange: () => applyDefaults(i) })} disabled={!product?.variants.length}>
                       <option value="">{product?.variants.length ? 'No variant' : '—'}</option>
@@ -498,17 +499,17 @@ function LinesForm({
                     </Select>
                   </Field>
                 </div>
-                <div className="col-span-3 md:col-span-1">
+                <div className="col-span-2 @4xl:col-span-1">
                   <Field label="Qty" error={errors.lines?.[i]?.quantity?.message}>
                     <Input type="number" min="1" {...register(`lines.${i}.quantity`)} />
                   </Field>
                 </div>
-                <div className="col-span-3 md:col-span-2">
+                <div className="col-span-2 @4xl:col-span-1">
                   <Field label="Unit ₹" error={errors.lines?.[i]?.unitPrice?.message}>
                     <Input type="number" step="0.01" min="0" {...register(`lines.${i}.unitPrice`)} />
                   </Field>
                 </div>
-                <div className="col-span-8 md:col-span-1">
+                <div className="col-span-2 @4xl:col-span-1">
                   <Field label="Tax">
                     <Select {...register(`lines.${i}.taxId`)}>
                       <option value="">None</option>
@@ -520,8 +521,8 @@ function LinesForm({
                     </Select>
                   </Field>
                 </div>
-                <div className="col-span-4 flex items-center justify-end gap-1 md:col-span-1">
-                  <span className="hidden text-xs text-slate-500 lg:inline">{money(toMinor(amount))}</span>
+                <div className="col-span-6 flex h-9 items-center justify-between gap-2 @4xl:col-span-1 @4xl:justify-end">
+                  <span className="font-mono text-[13px] text-slate-700">{money(toMinor(amount))}</span>
                   <Button type="button" variant="ghost" onClick={() => lines.remove(i)} aria-label="Remove line">
                     <Trash2 className="h-4 w-4" />
                   </Button>

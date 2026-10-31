@@ -84,7 +84,7 @@ export function PortalSubscriptionsPage() {
           {list.data!.data.map((s) => {
             const period = s.status === 'ACTIVE' && s.nextBillingDate ? currentPeriod(s.nextBillingDate, s.plan.billingPeriod, s.plan.billingInterval, s.startDate) : null
             return (
-              <section key={s.id} className="flex flex-col rounded-xl border border-line bg-surface p-5 shadow-[0_1px_2px_rgb(0_0_0/0.04)] dark:shadow-none">
+              <section key={s.id} className="flex flex-col rounded-xl border border-line bg-surface p-5 shadow-card">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <Link to={`/portal/subscriptions/${s.id}`} className="text-base font-medium text-slate-900 hover:underline">
