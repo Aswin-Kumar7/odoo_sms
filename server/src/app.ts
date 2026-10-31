@@ -6,6 +6,9 @@ import { env } from "./config/env.js";
 import { prisma } from "./lib/prisma.js";
 import { requestTiming } from "./middleware/timing.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.js";
+import { authenticate } from "./middleware/auth.js";
+import { authRouter } from "./modules/auth/auth.routes.js";
+import { usersRouter } from "./modules/users/users.routes.js";
 
 export function createApp() {
   const app = express();
@@ -27,7 +30,9 @@ export function createApp() {
   });
 
   const api = express.Router();
-  // Module routers are mounted here as they are built (M1+).
+  api.use(authenticate);
+  api.use("/auth", authRouter);
+  api.use("/users", usersRouter);
   app.use("/api/v1", api);
 
   app.use(notFoundHandler);

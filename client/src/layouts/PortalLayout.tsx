@@ -7,12 +7,12 @@ export function PortalLayout({ userName, onLogout }: { userName?: string; onLogo
   return (
     <div className="min-h-full">
       <header className="no-print border-b border-slate-200 bg-white">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-          <div className="flex items-center gap-6">
+        <div className="mx-auto flex min-h-14 max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-2">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <div className="flex items-center gap-2">
               <div className="h-7 w-7 rounded-full bg-brand-600" />
               <span className="font-semibold text-slate-900">Brightloop</span>
-              <span className="text-sm text-slate-400">Customer portal</span>
+              <span className="hidden text-sm text-slate-400 sm:inline">Customer portal</span>
             </div>
             <nav className="flex gap-1">
               <NavLink to="/portal/subscriptions" className={link}>
