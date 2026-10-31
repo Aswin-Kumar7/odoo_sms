@@ -7,10 +7,12 @@ import * as auth from "./auth.service.js";
 
 export const authRouter = Router();
 
-// Slows brute-force and reset-email abuse. In-memory store: per instance, fine for one node.
+// Slows brute-force and reset-email abuse. Only failed attempts count, so normal sign-ins
+// (e.g. switching roles during a demo) never lock anyone out. In-memory store: per instance.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 30,
+  limit: 20,
+  skipSuccessfulRequests: true,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   handler: (_req, res) => {

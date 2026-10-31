@@ -13,7 +13,9 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:generate": "prisma generate",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "db:reset-demo": "tsx prisma/reset-demo.ts",
+    "test:api": "node tests/integration/run-all.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
