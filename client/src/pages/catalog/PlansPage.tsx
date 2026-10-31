@@ -50,7 +50,7 @@ export function PlansPage() {
       />
       <Card>
         <div className="-m-4">
-          {plans.isLoading ? (
+          {plans.isPending ? (
             <Spinner />
           ) : plans.isError ? (
             <ErrorState error={plans.error} onRetry={() => plans.refetch()} />

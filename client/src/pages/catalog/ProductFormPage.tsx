@@ -117,7 +117,7 @@ export function ProductFormPage() {
     }
   }
 
-  if ((!isNew && product.isLoading) || taxes.isLoading) return <Spinner />
+  if ((!isNew && product.isPending) || taxes.isPending) return <Spinner />
   if (!isNew && product.isError) return <ErrorState error={product.error} onRetry={() => product.refetch()} />
 
   const sales = Number(watch('salesPrice')) || 0
@@ -147,9 +147,9 @@ export function ProductFormPage() {
         }
       />
 
-      <fieldset disabled={readOnly} className="grid gap-6 lg:grid-cols-3">
+      <fieldset disabled={readOnly} className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card title="Details" className="lg:col-span-2">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Name" error={errors.name?.message}>
               <Input autoFocus={isNew} {...register('name')} />
             </Field>

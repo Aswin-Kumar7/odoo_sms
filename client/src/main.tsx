@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { ApiError } from './api/client'
 import { AuthProvider } from './auth/AuthContext'
+import { ErrorBoundary, OutageBanner } from './components/resilience'
 import './index.css'
 import App from './App.tsx'
 
@@ -25,9 +26,12 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </ErrorBoundary>
+        <OutageBanner />
         <Toaster position="top-right" richColors />
       </BrowserRouter>
     </QueryClientProvider>

@@ -68,7 +68,7 @@ export function RecordPaymentModal({
         <p className="text-sm text-slate-600">
           Outstanding: <span className="font-semibold text-slate-900">{money(outstanding)}</span>. A smaller amount is recorded as a part payment.
         </p>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Method">
             <Select value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)}>
               {PAYMENT_METHODS.map((m) => (

@@ -46,7 +46,7 @@ export function TemplatesPage() {
           </>
         }
       />
-      {list.isLoading ? (
+      {list.isPending ? (
         <Spinner />
       ) : list.isError ? (
         <ErrorState error={list.error} onRetry={() => list.refetch()} />
@@ -55,7 +55,7 @@ export function TemplatesPage() {
           <EmptyState title="No templates yet" description={isAdmin ? 'Create one for your most common offer.' : undefined} />
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {rows.map((t) => {
             const linesValue = t.lines.reduce((sum, l) => sum + l.quantity * (l.product.salesPrice + (l.variant?.priceExtra ?? 0)), 0) + t.plan.price
             return (

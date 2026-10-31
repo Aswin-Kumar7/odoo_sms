@@ -37,7 +37,7 @@ export function PortalInvoicesPage() {
     <>
       <PageHeader title="My invoices" subtitle="View, print and pay your invoices." />
       {due && (
-        <div className="mb-6 grid gap-3 sm:grid-cols-2">
+        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-xs uppercase tracking-wide text-slate-500">Outstanding</p>
             <p className="mt-1 text-2xl font-semibold text-slate-900">{money(due.amount)}</p>
@@ -67,7 +67,7 @@ export function PortalInvoicesPage() {
               </button>
             ))}
           </div>
-          {list.isLoading ? (
+          {list.isPending ? (
             <Spinner />
           ) : list.isError ? (
             <ErrorState error={list.error} onRetry={() => list.refetch()} />
@@ -123,7 +123,7 @@ export function PortalInvoiceDetailPage() {
     },
   })
 
-  if (inv.isLoading) return <Spinner />
+  if (inv.isPending) return <Spinner />
   if (inv.isError) return <ErrorState error={inv.error} onRetry={() => inv.refetch()} />
   const i = inv.data!
 

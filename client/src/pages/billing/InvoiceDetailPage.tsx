@@ -44,7 +44,7 @@ export function InvoiceDetailPage() {
     },
   })
 
-  if (inv.isLoading) return <Spinner />
+  if (inv.isPending) return <Spinner />
   if (inv.isError) return <ErrorState error={inv.error} onRetry={() => inv.refetch()} />
   const i = inv.data!
   const busy = act.isPending
@@ -102,7 +102,7 @@ export function InvoiceDetailPage() {
         />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <div className="xl:col-span-2">
           <InvoiceDocument inv={i} />
         </div>

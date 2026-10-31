@@ -50,7 +50,7 @@ export function DiscountsPage() {
       />
       <Card>
         <div className="-m-4">
-          {list.isLoading ? (
+          {list.isPending ? (
             <Spinner />
           ) : list.isError ? (
             <ErrorState error={list.error} onRetry={() => list.refetch()} />

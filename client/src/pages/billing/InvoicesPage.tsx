@@ -103,7 +103,7 @@ export function InvoicesPage() {
               </Button>
             )}
           </div>
-          {list.isLoading ? (
+          {list.isPending ? (
             <Spinner />
           ) : list.isError ? (
             <ErrorState error={list.error} onRetry={() => list.refetch()} />

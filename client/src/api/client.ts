@@ -21,6 +21,8 @@ export class ApiError extends Error {
   }
 }
 
+import { outage } from '../lib/outage'
+
 const BASE = '/api/v1'
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -33,8 +35,10 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
       body: body !== undefined ? JSON.stringify(body) : undefined,
     })
   } catch {
+    outage.set(true)
     throw new ApiError(0, 'NETWORK', 'Cannot reach the server. Check your connection.')
   }
+  if (res.status === 503) outage.set(true)
 
   if (res.status === 204) return undefined as T
 

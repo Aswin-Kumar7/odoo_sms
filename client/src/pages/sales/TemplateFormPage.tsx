@@ -77,7 +77,7 @@ export function TemplateFormPage() {
     }
   })
 
-  if ((!isNew && template.isLoading) || products.isLoading || plans.isLoading) return <Spinner />
+  if ((!isNew && template.isPending) || products.isPending || plans.isPending) return <Spinner />
   if (!isNew && template.isError) return <ErrorState error={template.error} />
 
   const plan = plans.data?.find((p) => String(p.id) === watch('planId'))
@@ -101,7 +101,7 @@ export function TemplateFormPage() {
           </Button>
         }
       />
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card title="Template" className="lg:col-span-1">
           <div className="space-y-4">
             <Field label="Name" error={errors.name?.message}>

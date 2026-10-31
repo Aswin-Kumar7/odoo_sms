@@ -68,7 +68,7 @@ export function BillingPage() {
 
       <Card title="History">
         <div className="-m-4">
-          {runs.isLoading ? (
+          {runs.isPending ? (
             <Spinner />
           ) : runs.isError ? (
             <ErrorState error={runs.error} onRetry={() => runs.refetch()} />

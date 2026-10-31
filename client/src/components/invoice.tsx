@@ -34,7 +34,7 @@ export function InvoiceDocument({ inv }: { inv: Omit<Invoice, 'timeline' | 'bill
         </div>
       </header>
 
-      <section className="grid gap-4 border-b border-slate-200 py-4 text-sm sm:grid-cols-2">
+      <section className="grid grid-cols-1 gap-4 border-b border-slate-200 py-4 text-sm sm:grid-cols-2">
         <div>
           <p className="text-xs uppercase tracking-wide text-slate-500">Billed to</p>
           <p className="font-medium text-slate-900">{inv.customer.name}</p>

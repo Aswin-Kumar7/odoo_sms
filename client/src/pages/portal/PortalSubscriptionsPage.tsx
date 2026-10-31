@@ -67,7 +67,7 @@ export function PortalSubscriptionsPage() {
   return (
     <>
       <PageHeader title="My subscriptions" subtitle="Pause, resume, renew or close where your plan allows it — no email needed." />
-      {list.isLoading ? (
+      {list.isPending ? (
         <Spinner />
       ) : list.isError ? (
         <ErrorState error={list.error} onRetry={() => list.refetch()} />
@@ -76,7 +76,7 @@ export function PortalSubscriptionsPage() {
           <EmptyState title="No subscriptions yet" description="Once our team sends you a quotation it will appear here." />
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {list.data!.data.map((s) => (
             <Card
               key={s.id}
@@ -133,7 +133,7 @@ export function PortalSubscriptionDetailPage() {
   const { id } = useParams()
   const sub = useQuery({ queryKey: ['portal', 'subscriptions', id], queryFn: () => api.get<PortalSubscription>(`/portal/subscriptions/${id}`) })
 
-  if (sub.isLoading) return <Spinner />
+  if (sub.isPending) return <Spinner />
   if (sub.isError) return <ErrorState error={sub.error} onRetry={() => sub.refetch()} />
   const s = sub.data!
 
@@ -146,7 +146,7 @@ export function PortalSubscriptionDetailPage() {
       <div className="mb-6">
         <StatusStepper status={s.status} />
       </div>
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <Card title="What you pay each period" actions={<span className="text-xs text-slate-500">Priced on {date(s.pricedOn)}</span>}>
             <TotalsTable totals={s.totals} />

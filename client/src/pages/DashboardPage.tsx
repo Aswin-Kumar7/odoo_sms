@@ -159,13 +159,13 @@ export function DashboardPage() {
       ) : (
         s && (
           <>
-            <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <Kpi label="Active subscriptions" value={s.subscriptions.active.toLocaleString('en-IN')} hint={`${s.subscriptions.byStatus.PAUSED ?? 0} paused · ${s.subscriptions.total.toLocaleString('en-IN')} in total`} to={`/subscriptions?status=ACTIVE`} />
               <Kpi label="MRR" value={money(s.mrr)} hint="Monthly recurring revenue, before tax" />
               <Kpi label="ARR" value={money(s.arr)} hint="MRR × 12" />
               <Kpi label={`Collected (${rangeLabel})`} value={money(s.collected.amount)} hint={`${s.collected.count.toLocaleString('en-IN')} payment(s)`} to="/payments" />
             </div>
-            <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <Kpi label={`Invoiced (${rangeLabel})`} value={money(s.invoiced.amount)} hint={`${s.invoiced.count.toLocaleString('en-IN')} confirmed invoice(s)`} to="/invoices" />
               <Kpi label="Outstanding" value={money(s.outstanding.amount)} hint={`${s.outstanding.count.toLocaleString('en-IN')} unpaid invoice(s)`} to="/invoices?status=CONFIRMED" />
               <Kpi
@@ -183,7 +183,7 @@ export function DashboardPage() {
               />
             </div>
 
-            <div className="mb-6 grid gap-6 xl:grid-cols-3">
+            <div className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
               <Card title="Invoiced vs collected — last 12 months" className="xl:col-span-2">
                 {trend.isError ? (
                   <ErrorState error={trend.error} onRetry={() => trend.refetch()} />
@@ -230,7 +230,7 @@ export function DashboardPage() {
               </Card>
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
               <Card title={`Payments by method (${rangeLabel})`}>
                 {s.paymentsByMethod.length === 0 ? (
                   <p className="text-sm text-slate-500">No payments in this period.</p>

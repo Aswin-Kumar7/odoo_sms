@@ -49,7 +49,7 @@ export function SubscriptionDetailPage() {
     },
   })
 
-  if (sub.isLoading) return <Spinner />
+  if (sub.isPending) return <Spinner />
   if (sub.isError) return <ErrorState error={sub.error} onRetry={() => sub.refetch()} />
   const s = sub.data!
 
@@ -88,7 +88,7 @@ export function SubscriptionDetailPage() {
         ))}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <div className="space-y-6 xl:col-span-2">
           {s.editable ? <LinesEditor sub={s} onSaved={setDetail} onStateChange={setLinesState} /> : <Card title="Lines">{<TotalsTable totals={s.totals} />}</Card>}
           {s.editable && (

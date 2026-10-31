@@ -43,7 +43,7 @@ export function TaxesPage() {
       />
       <Card>
         <div className="-m-4">
-          {taxes.isLoading ? (
+          {taxes.isPending ? (
             <Spinner />
           ) : taxes.isError ? (
             <ErrorState error={taxes.error} onRetry={() => taxes.refetch()} />
