@@ -9,6 +9,9 @@ import { errorHandler, notFoundHandler } from "./middleware/error.js";
 import { authenticate } from "./middleware/auth.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { usersRouter } from "./modules/users/users.routes.js";
+import { taxesRouter } from "./modules/catalog/taxes.routes.js";
+import { productsRouter } from "./modules/catalog/products.routes.js";
+import { plansRouter } from "./modules/catalog/plans.routes.js";
 
 export function createApp() {
   const app = express();
@@ -33,6 +36,9 @@ export function createApp() {
   api.use(authenticate);
   api.use("/auth", authRouter);
   api.use("/users", usersRouter);
+  api.use("/taxes", taxesRouter);
+  api.use("/products", productsRouter);
+  api.use("/plans", plansRouter);
   app.use("/api/v1", api);
 
   app.use(notFoundHandler);

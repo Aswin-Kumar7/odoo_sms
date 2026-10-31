@@ -85,5 +85,10 @@ export function useAuth() {
   return ctx
 }
 
+/** UI convenience only — the API enforces the same rule on every write. */
+export function useIsAdmin() {
+  return useAuth().user?.role === 'ADMIN'
+}
+
 /** Where each role lands after signing in. */
 export const homeFor = (role: Role) => (role === 'CUSTOMER' ? '/portal' : '/dashboard')

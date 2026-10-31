@@ -11,6 +11,10 @@ import { SignupPage } from './pages/auth/SignupPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { UsersPage } from './pages/admin/UsersPage'
+import { TaxesPage } from './pages/catalog/TaxesPage'
+import { ProductsPage } from './pages/catalog/ProductsPage'
+import { ProductFormPage } from './pages/catalog/ProductFormPage'
+import { PlansPage } from './pages/catalog/PlansPage'
 
 function BackOffice() {
   const { user, logout } = useAuth()
@@ -56,9 +60,10 @@ export default function App() {
         <Route path="/invoices" element={<Placeholder title="Invoices" />} />
         <Route path="/payments" element={<Placeholder title="Payments" />} />
         <Route path="/billing" element={<Placeholder title="Billing runs" />} />
-        <Route path="/products" element={<Placeholder title="Products" />} />
-        <Route path="/plans" element={<Placeholder title="Recurring plans" />} />
-        <Route path="/taxes" element={<Placeholder title="Taxes" />} />
+        <Route path="/products" element={<ProductsPage />} />
+        <Route path="/products/:id" element={<ProductFormPage />} />
+        <Route path="/plans" element={<PlansPage />} />
+        <Route path="/taxes" element={<TaxesPage />} />
         <Route path="/discounts" element={<Placeholder title="Discounts" />} />
         <Route path="/users" element={<RequireAuth roles={['ADMIN']}><UsersPage /></RequireAuth>} />
       </Route>
