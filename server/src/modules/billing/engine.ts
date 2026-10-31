@@ -4,6 +4,7 @@ import { conflict } from "../../lib/errors.js";
 import { addDays, isoDate } from "../../lib/dates.js";
 import { nextPeriodStart, termEnd } from "../../lib/periods.js";
 import { logActivity } from "../../lib/activity.js";
+import { invalidateReports } from "../../lib/cache.js";
 import { priceWithDiscounts } from "../pricing/engine.js";
 import { buildPricingLines } from "../subscriptions/subscriptions.service.js";
 
@@ -256,12 +257,14 @@ export async function runBilling(opts: { asOf: Date; trigger: BillingTrigger; us
       }
     });
 
+    invalidateReports();
     const done = await prisma.billingRun.update({
       where: { id: run.id },
       data: { ...counts, errors, status: "COMPLETED", finishedAt: new Date() },
     });
     return { id: done.id, asOf: isoDate(done.asOf), status: done.status, ...counts, errors, durationMs: Date.now() - started };
   } catch (err) {
+    invalidateReports();
     // Unexpected failure: release the lock by marking the run failed. Committed invoices stay; a rerun continues.
     errors.push({ subscription: "-", message: err instanceof Error ? err.message.slice(0, 300) : String(err) });
     await prisma.billingRun.update({ where: { id: run.id }, data: { ...counts, errors, status: "FAILED", finishedAt: new Date() } });

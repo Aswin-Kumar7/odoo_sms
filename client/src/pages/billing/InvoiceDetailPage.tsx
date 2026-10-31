@@ -2,14 +2,15 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowLeft, Printer, Send } from 'lucide-react'
+import { ArrowLeft, IndianRupee, Printer, Send } from 'lucide-react'
 import { api } from '../../api/client'
 import type { Invoice } from '../../api/types'
 import { Button, Card, ErrorState, Field, Modal, PageHeader, Spinner, Textarea } from '../../components/ui'
 import { InvoiceDocument, InvoiceStatusBadge } from '../../components/invoice'
 import { Timeline } from '../../components/subscription'
+import { PaymentList, RecordPaymentModal, type PaymentDraft } from '../../components/payment'
 import { applyServerError } from '../../lib/forms'
-import { dateTime } from '../../lib/format'
+import { dateTime, money } from '../../lib/format'
 
 export function InvoiceDetailPage() {
   const { id } = useParams()
@@ -17,6 +18,7 @@ export function InvoiceDetailPage() {
   const key = ['invoices', id]
   const inv = useQuery({ queryKey: key, queryFn: () => api.get<Invoice>(`/invoices/${id}`) })
   const [cancelling, setCancelling] = useState(false)
+  const [paying, setPaying] = useState(false)
 
   const act = useMutation({
     mutationFn: ({ action, reason }: { action: 'confirm' | 'cancel' | 'send'; reason?: string }) => api.post<Invoice>(`/invoices/${id}/${action}`, { reason }),
@@ -28,6 +30,18 @@ export function InvoiceDetailPage() {
       setCancelling(false)
     },
     onError: (e) => applyServerError(e),
+  })
+
+  const pay = useMutation({
+    mutationFn: (p: PaymentDraft) => api.post<{ paymentId: number; invoice: Invoice }>(`/invoices/${id}/payments`, p),
+    onSuccess: ({ invoice }, p) => {
+      qc.setQueryData(key, invoice)
+      qc.invalidateQueries({ queryKey: ['invoices'], refetchType: 'none' })
+      qc.invalidateQueries({ queryKey: ['payments'] })
+      qc.invalidateQueries({ queryKey: ['reports'] })
+      toast.success(invoice.status === 'PAID' ? `${money(p.amount)} recorded — invoice paid in full` : `${money(p.amount)} recorded · ${money(invoice.outstanding)} still due`)
+      setPaying(false)
+    },
   })
 
   if (inv.isLoading) return <Spinner />
@@ -60,6 +74,16 @@ export function InvoiceDetailPage() {
                   Confirm
                 </Button>
               )}
+              {i.status === 'CONFIRMED' && (
+                <Button
+                  onClick={() => {
+                    pay.reset()
+                    setPaying(true)
+                  }}
+                >
+                  <IndianRupee className="h-4 w-4" /> Record payment
+                </Button>
+              )}
               {(i.status === 'CONFIRMED' || i.status === 'PAID') && (
                 <Button variant="secondary" loading={busy && act.variables?.action === 'send'} disabled={busy} onClick={() => act.mutate({ action: 'send' })}>
                   <Send className="h-4 w-4" /> {i.sentAt ? 'Send again' : 'Send'}
@@ -83,11 +107,16 @@ export function InvoiceDetailPage() {
           <InvoiceDocument inv={i} />
         </div>
         <div className="no-print space-y-6">
-          <Card title="Payments">
+          <Card title="Payments" actions={i.status !== 'CANCELLED' && <span className="text-sm text-slate-500">{money(i.amountPaid)} of {money(i.total)}</span>}>
             {i.payments.length === 0 ? (
               <p className="text-sm text-slate-500">{i.status === 'DRAFT' ? 'Confirm the invoice to start taking payments.' : 'No payments recorded yet.'}</p>
             ) : (
-              <p className="text-sm text-slate-600">{i.payments.length} payment(s) recorded.</p>
+              <PaymentList payments={i.payments} />
+            )}
+            {i.status === 'CONFIRMED' && (
+              <p className={i.overdue ? 'mt-3 text-sm font-medium text-red-600' : 'mt-3 text-sm text-slate-600'}>
+                {money(i.outstanding)} outstanding{i.overdue ? ' · overdue' : ''}
+              </p>
             )}
           </Card>
           <Card title="Timeline">
@@ -96,6 +125,7 @@ export function InvoiceDetailPage() {
         </div>
       </div>
 
+      {paying && <RecordPaymentModal outstanding={i.outstanding} loading={pay.isPending} error={pay.error} onClose={() => setPaying(false)} onSubmit={(p) => pay.mutate(p)} />}
       {cancelling && <CancelModal loading={busy} onClose={() => setCancelling(false)} onConfirm={(reason) => act.mutate({ action: 'cancel', reason })} />}
     </>
   )

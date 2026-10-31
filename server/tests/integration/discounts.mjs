@@ -1,20 +1,7 @@
 // Runs against a live API with the demo seed loaded. Creates its own test records:
 // use a separate database, or run `npm run db:reset-demo -- --yes` afterwards.
 // API integration checks for discounts.
-const B = `${process.env.API_URL ?? "http://localhost:4000"}/api/v1`;
-const jar = {};
-async function call(who, method, path, body) {
-  const res = await fetch(B + path, {
-    method,
-    headers: { "Content-Type": "application/json", ...(jar[who] ? { Cookie: jar[who] } : {}) },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const sc = res.headers.get("set-cookie");
-  if (sc) jar[who] = sc.split(";")[0];
-  const text = await res.text();
-  return { status: res.status, body: text ? JSON.parse(text) : null, ms: res.headers.get("x-response-time") };
-}
-const ok = (label, cond, extra = "") => console.log(`${cond ? "PASS" : "FAIL"} ${label}${extra !== "" ? " — " + extra : ""}`);
+import { call, ok } from "./helpers.mjs";
 const today = new Date().toISOString().slice(0, 10);
 const past = new Date(Date.now() - 10 * 864e5).toISOString().slice(0, 10);
 const yesterday = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
@@ -28,7 +15,7 @@ const crm = products.find((p) => p.name === "Brightloop CRM");
 const odoo = crm.variants.find((v) => v.name === "Brand: Odoo");
 const support = products.find((p) => p.name === "Support Plus");
 const monthly = (await call("staff", "GET", "/plans")).body.data.find((p) => p.name === "Monthly");
-const customer = (await call("staff", "GET", "/customers?q=Rita")).body.data[0];
+const customer = (await call("staff", "POST", "/customers", { name: `Discount Test ${tag}`, email: `discounts-${tag.toLowerCase()}@test.test` })).body;
 
 // ── Discount CRUD rules
 let r = await call("staff", "POST", "/discounts", { name: "x", code: "STAFFX", kind: "PERCENT", value: 1000, scope: "SUBSCRIPTION" });

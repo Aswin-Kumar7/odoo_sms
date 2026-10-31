@@ -19,6 +19,9 @@ import { DiscountsPage } from './pages/catalog/DiscountsPage'
 import { InvoicesPage } from './pages/billing/InvoicesPage'
 import { InvoiceDetailPage } from './pages/billing/InvoiceDetailPage'
 import { BillingPage } from './pages/billing/BillingPage'
+import { PaymentsPage } from './pages/billing/PaymentsPage'
+import { PortalSubscriptionDetailPage, PortalSubscriptionsPage } from './pages/portal/PortalSubscriptionsPage'
+import { PortalInvoiceDetailPage, PortalInvoicesPage } from './pages/portal/PortalInvoicesPage'
 import { CustomersPage } from './pages/sales/CustomersPage'
 import { TemplatesPage } from './pages/sales/TemplatesPage'
 import { TemplateFormPage } from './pages/sales/TemplateFormPage'
@@ -72,7 +75,7 @@ export default function App() {
         <Route path="/templates/:id" element={<RequireAuth roles={['ADMIN']}><TemplateFormPage /></RequireAuth>} />
         <Route path="/invoices" element={<InvoicesPage />} />
         <Route path="/invoices/:id" element={<InvoiceDetailPage />} />
-        <Route path="/payments" element={<Placeholder title="Payments" />} />
+        <Route path="/payments" element={<PaymentsPage />} />
         <Route path="/billing" element={<BillingPage />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/products/:id" element={<ProductFormPage />} />
@@ -84,8 +87,10 @@ export default function App() {
 
       <Route path="/portal" element={<Portal />}>
         <Route index element={<Navigate to="subscriptions" replace />} />
-        <Route path="subscriptions" element={<Placeholder title="My subscriptions" />} />
-        <Route path="invoices" element={<Placeholder title="My invoices" />} />
+        <Route path="subscriptions" element={<PortalSubscriptionsPage />} />
+        <Route path="subscriptions/:id" element={<PortalSubscriptionDetailPage />} />
+        <Route path="invoices" element={<PortalInvoicesPage />} />
+        <Route path="invoices/:id" element={<PortalInvoiceDetailPage />} />
       </Route>
 
       <Route path="*" element={<Home />} />

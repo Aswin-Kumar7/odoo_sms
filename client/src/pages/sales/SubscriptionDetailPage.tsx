@@ -10,7 +10,7 @@ import { api, ApiError } from '../../api/client'
 import { periodLabel, type Discount, type Product, type Subscription, type SubscriptionAction, type Tax, type Totals } from '../../api/types'
 import { useActivePlans, useActiveProducts, useActiveTaxes } from '../../api/lookups'
 import { Badge, Button, Card, ErrorState, Field, Input, Modal, PageHeader, Select, Spinner, Table, Td, Textarea } from '../../components/ui'
-import { StatusStepper, Timeline, TotalsTable } from '../../components/subscription'
+import { ReasonModal, StatusStepper, Timeline, TotalsTable } from '../../components/subscription'
 import { applyServerError } from '../../lib/forms'
 import { date, money, todayIso, toMajor, toMinor } from '../../lib/format'
 import { discountConditions, discountValue } from '../../lib/discounts'
@@ -202,31 +202,6 @@ export function SubscriptionDetailPage() {
       )}
       {editingInfo && <InfoModal sub={s} onClose={() => setEditingInfo(false)} onSaved={setDetail} />}
     </>
-  )
-}
-
-function ReasonModal({ title, loading, onClose, onConfirm }: { title: string; loading: boolean; onClose: () => void; onConfirm: (reason: string | undefined) => void }) {
-  const [reason, setReason] = useState('')
-  return (
-    <Modal
-      open
-      title={title}
-      onClose={onClose}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            Back
-          </Button>
-          <Button variant="danger" loading={loading} onClick={() => onConfirm(reason.trim() || undefined)}>
-            {title}
-          </Button>
-        </>
-      }
-    >
-      <Field label="Reason (optional)" hint="Shown on the timeline">
-        <Textarea autoFocus value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Customer moved to another provider" />
-      </Field>
-    </Modal>
   )
 }
 

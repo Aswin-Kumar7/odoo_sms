@@ -1,6 +1,6 @@
 import type { Invoice } from '../api/types'
-import { periodLabel } from '../api/types'
-import { date, humanize, money, percent } from '../lib/format'
+import { paymentMethodLabel, periodLabel } from '../api/types'
+import { date, money, percent } from '../lib/format'
 import { Badge } from './ui'
 
 /** The period end is stored exclusive (= next period's start); people expect the last day. */
@@ -14,7 +14,7 @@ export function InvoiceStatusBadge({ status, overdue }: { status: string; overdu
  * The invoice as a document — used on screen and for printing (the surrounding page
  * hides everything marked no-print). Shared by staff and the customer portal.
  */
-export function InvoiceDocument({ inv }: { inv: Invoice }) {
+export function InvoiceDocument({ inv }: { inv: Omit<Invoice, 'timeline' | 'billingRun'> }) {
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm print:border-0 print:p-0 print:shadow-none">
       <header className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-4">
@@ -105,7 +105,7 @@ export function InvoiceDocument({ inv }: { inv: Invoice }) {
               <p className="pt-2 text-xs uppercase tracking-wide text-slate-500">Payments received</p>
               {inv.payments.map((p) => (
                 <p key={p.id}>
-                  {date(p.paidOn)} · {humanize(p.method)} · {money(p.amount)}
+                  {date(p.paidOn)} · {paymentMethodLabel(p.method)} · {money(p.amount)}
                 </p>
               ))}
             </>

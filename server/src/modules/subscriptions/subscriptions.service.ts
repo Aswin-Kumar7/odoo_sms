@@ -5,6 +5,7 @@ import { paging } from "../../lib/http.js";
 import { addDays, today } from "../../lib/dates.js";
 import { periodIndex, periodStart, termEnd } from "../../lib/periods.js";
 import { logActivity } from "../../lib/activity.js";
+import { invalidateReports } from "../../lib/cache.js";
 import { priceWithDiscounts, type PricingLine } from "../pricing/engine.js";
 import { availableActions, checkTransition, EDITABLE_STATUSES, TransitionError, type Action, type Actor } from "./stateMachine.js";
 
@@ -125,6 +126,23 @@ export async function getSubscription(id: number, actor: Actor = "staff", custom
     editable: EDITABLE_STATUSES.includes(sub.status),
     timeline,
   };
+}
+
+/** A customer's own subscriptions with totals and the self-service actions their plans allow. Drafts stay internal. */
+export async function listCustomerSubscriptions(customerId: number) {
+  const subs = await prisma.subscription.findMany({
+    relationLoadStrategy: "join",
+    where: { customerId, status: { not: "DRAFT" } },
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+    take: 100,
+    include: detailInclude,
+  });
+  return subs.map((sub) => ({
+    ...sub,
+    pricedOn: pricingDate(sub),
+    totals: priceWithDiscounts(buildPricingLines(sub), sub.discounts.map((sd) => sd.discount), pricingDate(sub)),
+    actions: availableActions(transitionContext(sub), "customer"),
+  }));
 }
 
 export async function listSubscriptions(opts: {
@@ -404,6 +422,7 @@ export async function transition(
     await casUpdate(tx, id, { statuses: [sub.status], version: sub.version }, data);
     await logActivity(tx, { entityType: "subscription", entityId: id, action, fromStatus: sub.status, toStatus: to, userId: opts.userId, meta });
   });
+  invalidateReports();
   return getSubscription(id, actor, opts.customerId);
 }
 

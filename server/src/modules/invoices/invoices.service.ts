@@ -6,6 +6,7 @@ import { paging } from "../../lib/http.js";
 import { addDays, isoDate, today } from "../../lib/dates.js";
 import { logActivity } from "../../lib/activity.js";
 import { sendMail } from "../../lib/mailer.js";
+import { invalidateReports } from "../../lib/cache.js";
 
 // Invoice lifecycle: DRAFT → CONFIRMED → PAID, or CANCELLED.
 // "Overdue" is derived (CONFIRMED and past due), never stored, so it can't go stale.
@@ -36,8 +37,8 @@ export async function getInvoice(id: number, customerId?: number) {
       include: { user: { select: { name: true, role: true } } },
     }),
   ]);
-  // Customers only ever see their own invoices; others look like they don't exist.
-  if (!inv || (customerId !== undefined && inv.customerId !== customerId)) throw notFound("Invoice");
+  // Customers only ever see their own issued invoices; others (and internal drafts) look like they don't exist.
+  if (!inv || (customerId !== undefined && (inv.customerId !== customerId || inv.status === "DRAFT"))) throw notFound("Invoice");
   return { ...inv, overdue: isOverdue(inv), outstanding: inv.status === "CANCELLED" ? 0 : inv.total - inv.amountPaid, timeline };
 }
 
@@ -52,9 +53,12 @@ export async function listInvoices(opts: {
   subscriptionId?: number;
   from?: Date;
   to?: Date;
+  /** Customer portal: drafts are internal until confirmed. */
+  hideDrafts?: boolean;
 }) {
   const t = today();
   const base: Prisma.InvoiceWhereInput = {
+    ...(opts.hideDrafts ? { status: { not: "DRAFT" } } : {}),
     ...(opts.customerId ? { customerId: opts.customerId } : {}),
     ...(opts.subscriptionId ? { subscriptionId: opts.subscriptionId } : {}),
     ...(opts.from || opts.to ? { issueDate: { ...(opts.from ? { gte: opts.from } : {}), ...(opts.to ? { lte: opts.to } : {}) } } : {}),
@@ -64,7 +68,7 @@ export async function listInvoices(opts: {
   };
   const statusWhere: Prisma.InvoiceWhereInput =
     opts.status === "OVERDUE" ? { status: "CONFIRMED", dueDate: { lt: t } } : opts.status ? { status: opts.status } : {};
-  const where = { ...base, ...statusWhere };
+  const where = opts.hideDrafts && opts.status === "DRAFT" ? { id: -1 } : { ...base, ...statusWhere };
 
   const [total, data, grouped, overdue] = await Promise.all([
     prisma.invoice.count({ where }),
@@ -102,6 +106,16 @@ export async function listInvoices(opts: {
   };
 }
 
+/** What a customer still owes: all confirmed invoices, and the overdue part of that. */
+export async function outstandingFor(customerId: number) {
+  const [row] = await prisma.$queryRaw<{ amount: bigint | null; overdue: bigint | null; count: bigint }[]>`
+    SELECT SUM(total - amount_paid) AS amount,
+           SUM(total - amount_paid) FILTER (WHERE due_date < ${today()}::date) AS overdue,
+           COUNT(*) AS count
+    FROM invoices WHERE customer_id = ${customerId} AND status = 'CONFIRMED'`;
+  return { amount: Number(row?.amount ?? 0), overdue: Number(row?.overdue ?? 0), count: Number(row?.count ?? 0) };
+}
+
 /** Compare-and-set on status: the transition happens only if the invoice is still in an expected state. */
 async function casStatus(tx: Prisma.TransactionClient, id: number, from: InvoiceStatus[], data: Prisma.InvoiceUpdateManyMutationInput, extraWhere: Prisma.InvoiceWhereInput = {}) {
   const { count } = await tx.invoice.updateMany({ where: { id, status: { in: from }, ...extraWhere }, data });
@@ -116,6 +130,7 @@ export async function confirmInvoice(id: number, userId: number) {
     await casStatus(tx, id, ["DRAFT"], { status: "CONFIRMED" });
     await logActivity(tx, { entityType: "invoice", entityId: id, action: "confirm", fromStatus: "DRAFT", toStatus: "CONFIRMED", userId });
   });
+  invalidateReports();
   return getInvoice(id);
 }
 
@@ -131,6 +146,7 @@ export async function confirmMany(ids: number[], userId: number) {
     });
     return count;
   });
+  invalidateReports();
   return { confirmed, skipped: ids.length - confirmed };
 }
 
@@ -170,6 +186,7 @@ export async function cancelInvoice(id: number, userId: number, reason?: string)
       meta: { reason: reason ?? null, rebill, releasedDiscounts: inv.discounts.length },
     });
   });
+  invalidateReports();
   return getInvoice(id);
 }
 

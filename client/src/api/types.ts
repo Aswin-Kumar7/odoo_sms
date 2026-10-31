@@ -320,3 +320,42 @@ export interface RunSummary {
   errors: { subscription: string; message: string }[]
   durationMs: number
 }
+
+export type PaymentMethod = Payment['method']
+
+/** Methods staff can record; the online one is used only by the customer portal's Pay now. */
+export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
+  { value: 'UPI', label: 'UPI' },
+  { value: 'BANK_TRANSFER', label: 'Bank transfer' },
+  { value: 'CARD', label: 'Card' },
+  { value: 'CASH', label: 'Cash' },
+  { value: 'CHEQUE', label: 'Cheque' },
+]
+
+export const paymentMethodLabel = (m: PaymentMethod) => (m === 'ONLINE_SIMULATED' ? 'Online (portal)' : PAYMENT_METHODS.find((x) => x.value === m)?.label ?? m)
+
+export interface PaymentListItem {
+  id: number
+  method: PaymentMethod
+  amount: number
+  paidOn: string
+  note: string | null
+  createdAt: string
+  recordedBy: { name: string; role: string } | null
+  invoice: { id: number; number: string; status: InvoiceStatus; customer: { id: number; name: string } }
+}
+
+export interface PaymentSummary {
+  count: number
+  amount: number
+  byMethod: { method: PaymentMethod; count: number; amount: number }[]
+}
+
+/** Customer portal views: same shapes, minus internal details. */
+export type PortalSubscription = Omit<Subscription, 'notes' | 'createdBy'>
+export type PortalInvoice = Omit<Invoice, 'timeline' | 'billingRun'>
+export interface Outstanding {
+  amount: number
+  overdue: number
+  count: number
+}

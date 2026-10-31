@@ -1,20 +1,7 @@
 // Runs against a live API with the demo seed loaded. Creates its own test records:
 // use a separate database, or run `npm run db:reset-demo -- --yes` afterwards.
 // API integration checks for customers, templates and subscriptions.
-const B = `${process.env.API_URL ?? "http://localhost:4000"}/api/v1`;
-const jar = {};
-async function call(who, method, path, body) {
-  const res = await fetch(B + path, {
-    method,
-    headers: { "Content-Type": "application/json", ...(jar[who] ? { Cookie: jar[who] } : {}) },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const sc = res.headers.get("set-cookie");
-  if (sc) jar[who] = sc.split(";")[0];
-  const text = await res.text();
-  return { status: res.status, body: text ? JSON.parse(text) : null };
-}
-const ok = (label, cond, extra = "") => console.log(`${cond ? "PASS" : "FAIL"} ${label}${extra ? " — " + extra : ""}`);
+import { call, ok } from "./helpers.mjs";
 const today = new Date().toISOString().slice(0, 10);
 const future = new Date(Date.now() + 20 * 864e5).toISOString().slice(0, 10);
 

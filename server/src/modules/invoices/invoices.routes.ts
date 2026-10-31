@@ -4,6 +4,8 @@ import { ah, IdParam, PageQuery } from "../../lib/http.js";
 import { DateOnly } from "../../lib/dates.js";
 import { requireRole } from "../../middleware/auth.js";
 import * as invoices from "./invoices.service.js";
+import { recordPayment } from "../payments/payments.service.js";
+import { PaymentBody } from "../payments/payments.routes.js";
 
 export const invoicesRouter = Router();
 invoicesRouter.use(requireRole("ADMIN", "STAFF"));
@@ -50,6 +52,21 @@ invoicesRouter.post(
   ah(async (req, res) => {
     const { reason } = z.object({ reason: z.string().trim().max(300).optional() }).parse(req.body ?? {});
     res.json(await invoices.cancelInvoice(IdParam.parse(req.params).id, req.user!.id, reason));
+  }),
+);
+
+invoicesRouter.get(
+  "/:id/payments",
+  ah(async (req, res) => {
+    res.json((await invoices.getInvoice(IdParam.parse(req.params).id)).payments);
+  }),
+);
+
+invoicesRouter.post(
+  "/:id/payments",
+  ah(async (req, res) => {
+    const { id } = IdParam.parse(req.params);
+    res.status(201).json(await recordPayment(id, PaymentBody.parse(req.body), req.user!.id));
   }),
 );
 

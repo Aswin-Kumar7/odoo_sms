@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { clsx } from 'clsx'
 import { Check, Pause } from 'lucide-react'
-import { SUBSCRIPTION_FLOW, type ActivityEntry, type SubscriptionStatus, type Totals } from '../api/types'
+import { paymentMethodLabel, SUBSCRIPTION_FLOW, type ActivityEntry, type PaymentMethod, type SubscriptionStatus, type Totals } from '../api/types'
 import { dateTime, humanize, money, percent } from '../lib/format'
+import { Button, Field, Modal, Textarea } from './ui'
 
 /** Draft → Quotation → Confirmed → Active → Closed, with Paused shown on the Active step. */
 export function StatusStepper({ status }: { status: SubscriptionStatus }) {
@@ -48,6 +50,7 @@ const ACTION_TEXT: Record<string, string> = {
   discount_attached: 'Discount attached',
   discount_removed: 'Discount removed',
   send: 'Sent to customer',
+  payment: 'Payment received',
 }
 
 function describeMeta(e: ActivityEntry): string | null {
@@ -59,6 +62,7 @@ function describeMeta(e: ActivityEntry): string | null {
   if (e.action === 'lines_updated' && m.lineCount !== undefined) return `${m.lineCount} line(s)`
   if (e.action === 'updated' && Array.isArray(m.fields)) return `Changed: ${(m.fields as string[]).join(', ')}`
   if (e.action === 'send' && m.to) return `To ${m.to}`
+  if (e.action === 'payment' && typeof m.amount === 'number') return `${money(m.amount)} · ${paymentMethodLabel(m.method as PaymentMethod)}${e.toStatus === 'PAID' ? ' · paid in full' : ''}`
   if (e.action === 'created' && m.billingRunId) return `Billing run #${m.billingRunId}`
   if (e.action === 'cancel' && m.rebill) return 'Period will be billed again on the next run'
   if (m.bulk) return 'Bulk confirmation'
@@ -138,5 +142,31 @@ export function TotalsTable({ totals }: { totals: Totals }) {
         </div>
       </dl>
     </div>
+  )
+}
+
+/** Confirms closing or cancelling a subscription, with an optional reason for the timeline. */
+export function ReasonModal({ title, loading, onClose, onConfirm }: { title: string; loading: boolean; onClose: () => void; onConfirm: (reason: string | undefined) => void }) {
+  const [reason, setReason] = useState('')
+  return (
+    <Modal
+      open
+      title={title}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            Back
+          </Button>
+          <Button variant="danger" loading={loading} onClick={() => onConfirm(reason.trim() || undefined)}>
+            {title}
+          </Button>
+        </>
+      }
+    >
+      <Field label="Reason (optional)" hint="Shown on the timeline">
+        <Textarea autoFocus value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Customer moved to another provider" />
+      </Field>
+    </Modal>
   )
 }

@@ -1,21 +1,7 @@
 // Runs against a live API with the demo seed loaded. Creates its own test records:
 // use a separate database, or run `npm run db:reset-demo -- --yes` afterwards.
 // API integration checks for the billing engine and invoices.
-const B = `${process.env.API_URL ?? "http://localhost:4000"}/api/v1`;
-const jar = {};
-async function call(who, method, path, body) {
-  const res = await fetch(B + path, {
-    method,
-    headers: { "Content-Type": "application/json", ...(jar[who] ? { Cookie: jar[who] } : {}) },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const sc = res.headers.get("set-cookie");
-  if (sc) jar[who] = sc.split(";")[0];
-  const text = await res.text();
-  return { status: res.status, body: text ? JSON.parse(text) : null, ms: res.headers.get("x-response-time") };
-}
-const ok = (label, cond, extra = "") => console.log(`${cond ? "PASS" : "FAIL"} ${label}${extra !== "" ? " — " + extra : ""}`);
-const day = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+import { call, ok, day } from "./helpers.mjs";
 const addMonths = (iso, m) => { const d = new Date(iso + "T00:00:00Z"); const y = d.getUTCFullYear(), mo = d.getUTCMonth() + m; const last = new Date(Date.UTC(y, mo + 1, 0)).getUTCDate(); return new Date(Date.UTC(y, mo, Math.min(d.getUTCDate(), last))).toISOString().slice(0, 10); }; // anchored, clamped to month end
 const today = day(0);
 const tag = Date.now().toString(36).toUpperCase().slice(-5);

@@ -33,6 +33,12 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
       res.status(404).json({ error: { code: "NOT_FOUND", message: "Record not found", details: null } });
       return;
     }
+    // Transaction could not start or timed out (pool exhausted, slow network): nothing was committed.
+    if (err.code === "P2028" || err.code === "P2034") {
+      console.warn(`[${req.id}] Transaction aborted on ${req.method} ${req.path}: ${err.code}`);
+      res.status(503).json({ error: { code: "SERVICE_BUSY", message: "The server is busy; nothing was saved. Please try again.", details: null } });
+      return;
+    }
   }
 
   // A database CHECK constraint (SQLSTATE 23514) caught a value the services should have rejected.
