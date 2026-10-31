@@ -170,7 +170,8 @@ export function LandingPage() {
         <LoopArt className="pointer-events-none absolute top-0 right-[-12%] h-[560px] w-[90%] opacity-50 [mask-image:radial-gradient(closest-side,#000_78%,transparent)] sm:right-[-6%] sm:h-[640px] sm:w-[70%] sm:opacity-100 lg:right-[-4%] lg:h-[700px] lg:w-[62%]" />
 
         <header className="relative mx-auto flex h-16 max-w-[1240px] items-center gap-8 px-4 sm:px-6">
-          <Link to="/" aria-label="Brightloop home">
+          {/* Flex so the mark centres on the nav line; -ml-1 cancels the mark's inner padding so it aligns with the hero text */}
+          <Link to="/" aria-label="Brightloop home" className="-ml-1 flex items-center">
             <Logo />
           </Link>
           <nav className="hidden gap-6 text-sm text-slate-600 md:flex">
