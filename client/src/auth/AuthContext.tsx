@@ -15,9 +15,18 @@ export interface User {
 interface AuthState {
   user: User | null
   loading: boolean
-  login: (email: string, password: string) => Promise<User>
+  /** `roles` limits who may sign in through this entrance; others are signed straight back out. */
+  login: (email: string, password: string, roles?: Role[]) => Promise<User>
   signup: (input: { name: string; company?: string; email: string; password: string }) => Promise<User>
   logout: () => Promise<void>
+}
+
+export class WrongEntranceError extends Error {
+  readonly role: Role
+  constructor(role: Role) {
+    super(role === 'CUSTOMER' ? 'This is a customer account. Use the customer sign in instead.' : 'This is a team account. Use Login as Admin instead.')
+    this.role = role
+  }
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -52,8 +61,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   const login = useCallback(
-    async (email: string, password: string) => {
+    async (email: string, password: string, roles?: Role[]) => {
       const { user } = await api.post<{ user: User }>('/auth/login', { email, password })
+      // Checked before the session is shown, so the page never flips to the wrong home first.
+      if (roles && !roles.includes(user.role)) {
+        await api.post('/auth/logout').catch(() => undefined)
+        throw new WrongEntranceError(user.role)
+      }
       setSessionUser(user)
       return user
     },

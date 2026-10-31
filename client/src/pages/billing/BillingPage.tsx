@@ -35,7 +35,7 @@ export function BillingPage() {
 
   return (
     <>
-      <PageHeader title="Billing runs" subtitle="Invoices are generated automatically every day. Each run bills every period that is due — and never the same period twice." />
+      <PageHeader title="Billing runs" subtitle="Invoices are generated automatically every day. Each run bills every period that is due, and never the same period twice." />
 
       {isAdmin && (
         <Card title="Run billing" className="mb-6">
@@ -67,7 +67,7 @@ export function BillingPage() {
       )}
 
       <Card title="History">
-        <div className="-m-4">
+        <div className="-m-5">
           {runs.isPending ? (
             <Spinner />
           ) : runs.isError ? (
@@ -79,7 +79,7 @@ export function BillingPage() {
               {runs.data!.map((r) => {
                 const secs = r.finishedAt ? ((new Date(r.finishedAt).getTime() - new Date(r.startedAt).getTime()) / 1000).toFixed(1) + ' s' : '—'
                 return [
-                  <tr key={r.id} className={r.errors.length ? 'cursor-pointer hover:bg-slate-50' : ''} onClick={() => r.errors.length && setExpanded(expanded === r.id ? null : r.id)}>
+                  <tr key={r.id} className={r.errors.length ? 'cursor-pointer hover:bg-slate-100/60' : ''} onClick={() => r.errors.length && setExpanded(expanded === r.id ? null : r.id)}>
                     <Td>
                       #{r.id}
                       <span className="block text-xs text-slate-400">{dateTime(r.startedAt)}</span>
@@ -119,8 +119,8 @@ export function BillingPage() {
 
 function Stat({ label, value, tone }: { label: string; value: number; tone?: 'brand' | 'red' }) {
   return (
-    <div className="rounded-md border border-slate-200 p-3">
-      <p className={`text-2xl font-semibold ${tone === 'brand' ? 'text-brand-700' : tone === 'red' ? 'text-red-600' : 'text-slate-900'}`}>{value}</p>
+    <div className="rounded-md border border-line p-3">
+      <p className={`text-2xl font-medium ${tone === 'brand' ? 'text-brand-700' : tone === 'red' ? 'text-red-600' : 'text-slate-900'}`}>{value}</p>
       <p className="text-xs text-slate-500">{label}</p>
     </div>
   )

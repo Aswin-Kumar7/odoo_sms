@@ -1,4 +1,4 @@
-import { lazy, type ComponentType } from 'react'
+import { lazy, Suspense, type ComponentType } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { AppLayout } from './layouts/AppLayout'
 import { PortalLayout } from './layouts/PortalLayout'
@@ -17,6 +17,8 @@ function page<K extends string>(load: () => Promise<Record<K, ComponentType>>, n
   return lazy(() => load().then((m) => ({ default: m[name] })))
 }
 
+const LandingPage = page(() => import('./pages/LandingPage'), 'LandingPage')
+const PortalHomePage = page(() => import('./pages/portal/PortalHomePage'), 'PortalHomePage')
 const DashboardPage = page(() => import('./pages/DashboardPage'), 'DashboardPage')
 const UsersPage = page(() => import('./pages/admin/UsersPage'), 'UsersPage')
 const TaxesPage = page(() => import('./pages/catalog/TaxesPage'), 'TaxesPage')
@@ -44,7 +46,7 @@ function BackOffice() {
   const navigate = useNavigate()
   return (
     <RequireAuth roles={['ADMIN', 'STAFF']}>
-      <AppLayout role={user?.role} userName={user?.name} onLogout={() => logout().then(() => navigate('/login'))} />
+      <AppLayout role={user?.role} userName={user?.name} onLogout={() => logout().then(() => navigate('/login/team'))} />
     </RequireAuth>
   )
 }
@@ -62,14 +64,17 @@ function Portal() {
 function Home() {
   const { user, loading } = useAuth()
   if (loading) return <Spinner />
-  return <Navigate to={user ? homeFor(user.role) : '/login'} replace />
+  return <Navigate to={user ? homeFor(user.role) : '/'} replace />
 }
 
 export default function App() {
   return (
     <Routes>
+      <Route path="/" element={<Suspense fallback={<Spinner />}><LandingPage /></Suspense>} />
+
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<GuestOnly><LoginPage /></GuestOnly>} />
+        <Route path="/login/team" element={<GuestOnly><LoginPage team /></GuestOnly>} />
         <Route path="/signup" element={<GuestOnly><SignupPage /></GuestOnly>} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -96,7 +101,7 @@ export default function App() {
       </Route>
 
       <Route path="/portal" element={<Portal />}>
-        <Route index element={<Navigate to="subscriptions" replace />} />
+        <Route index element={<PortalHomePage />} />
         <Route path="subscriptions" element={<PortalSubscriptionsPage />} />
         <Route path="subscriptions/:id" element={<PortalSubscriptionDetailPage />} />
         <Route path="invoices" element={<PortalInvoicesPage />} />

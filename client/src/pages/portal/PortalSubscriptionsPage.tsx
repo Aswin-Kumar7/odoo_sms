@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowLeft, CalendarClock, Repeat } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { api } from '../../api/client'
 import { periodLabel, type PortalSubscription, type SubscriptionAction } from '../../api/types'
 import { Badge, Button, Card, EmptyState, ErrorState, PageHeader, Spinner, Table, Td } from '../../components/ui'
 import { ReasonModal, StatusStepper, Timeline, TotalsTable } from '../../components/subscription'
 import { InvoiceStatusBadge, lastDay } from '../../components/invoice'
+import { CycleRing } from '../../components/brand'
+import { currentPeriod } from '../../lib/periods'
 import { applyServerError } from '../../lib/forms'
 import { date, money } from '../../lib/format'
 
@@ -19,7 +21,7 @@ const DONE_TEXT: Partial<Record<SubscriptionAction, string>> = {
 }
 
 /** Self-service buttons for the actions the customer's plan allows; blocked ones explain why. */
-function SelfServiceActions({ sub }: { sub: PortalSubscription }) {
+function SelfServiceActions({ sub, compact = false }: { sub: PortalSubscription; compact?: boolean }) {
   const qc = useQueryClient()
   const [closing, setClosing] = useState(false)
   const act = useMutation({
@@ -33,13 +35,15 @@ function SelfServiceActions({ sub }: { sub: PortalSubscription }) {
     },
     onError: (e) => applyServerError(e),
   })
-  if (sub.actions.length === 0) return null
+  const shown = compact ? sub.actions.filter((a) => !a.blockedReason) : sub.actions
+  if (shown.length === 0) return null
   return (
     <div className="flex flex-wrap gap-2">
-      {sub.actions.map((a) => (
+      {shown.map((a) => (
         <Button
           key={a.action}
-          variant={a.action === 'close' ? 'secondary' : 'primary'}
+          variant={a.action === 'close' || compact ? 'secondary' : 'primary'}
+          size={compact ? 'sm' : 'md'}
           disabled={!!a.blockedReason || act.isPending}
           loading={act.isPending && act.variables?.action === a.action}
           title={a.blockedReason ?? undefined}
@@ -48,7 +52,7 @@ function SelfServiceActions({ sub }: { sub: PortalSubscription }) {
           {a.label}
         </Button>
       ))}
-      {sub.actions.some((a) => a.blockedReason) && (
+      {!compact && sub.actions.some((a) => a.blockedReason) && (
         <p className="w-full text-xs text-slate-500">
           {sub.actions
             .filter((a) => a.blockedReason)
@@ -66,7 +70,7 @@ export function PortalSubscriptionsPage() {
 
   return (
     <>
-      <PageHeader title="My subscriptions" subtitle="Pause, resume, renew or close where your plan allows it — no email needed." />
+      <PageHeader title="Subscriptions" subtitle="Pause, resume, renew or close a subscription when its plan allows it" />
       {list.isPending ? (
         <Spinner />
       ) : list.isError ? (
@@ -77,52 +81,62 @@ export function PortalSubscriptionsPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {list.data!.data.map((s) => (
-            <Card
-              key={s.id}
-              title={
-                <Link to={`/portal/subscriptions/${s.id}`} className="text-brand-700 hover:underline">
-                  {s.number}
-                </Link>
-              }
-              actions={<Badge status={s.status} />}
-            >
-              <div className="space-y-3 text-sm">
-                <p className="flex items-center gap-2 font-medium text-slate-800">
-                  <Repeat className="h-4 w-4 text-slate-400" /> {s.plan.name} · {periodLabel(s.plan.billingPeriod, s.plan.billingInterval)}
-                </p>
-                <p className="text-slate-600">{s.totals.lines.map((l) => (l.quantity > 1 ? `${l.quantity} × ${l.description}` : l.description)).join(', ')}</p>
-                <dl className="grid grid-cols-2 gap-y-1">
-                  <dt className="text-slate-500">Per period</dt>
-                  <dd className="text-right font-semibold">{money(s.totals.total)}</dd>
-                  {s.status === 'ACTIVE' && s.nextBillingDate && (
-                    <>
+          {list.data!.data.map((s) => {
+            const period = s.status === 'ACTIVE' && s.nextBillingDate ? currentPeriod(s.nextBillingDate, s.plan.billingPeriod, s.plan.billingInterval, s.startDate) : null
+            return (
+              <section key={s.id} className="flex flex-col rounded-xl border border-line bg-surface p-5 shadow-[0_1px_2px_rgb(0_0_0/0.04)] dark:shadow-none">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <Link to={`/portal/subscriptions/${s.id}`} className="text-base font-medium text-slate-900 hover:underline">
+                      {s.plan.name}
+                    </Link>
+                    <p className="mt-0.5 font-mono text-xs text-slate-500">
+                      {s.number} · {periodLabel(s.plan.billingPeriod, s.plan.billingInterval).toLowerCase()}
+                    </p>
+                  </div>
+                  <Badge status={s.status} />
+                </div>
+                <p className="mt-4 text-sm text-slate-600">{s.totals.lines.map((l) => (l.quantity > 1 ? `${l.quantity} × ${l.description}` : l.description)).join(', ')}</p>
+                <dl className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
+                  <div className="flex items-baseline justify-between">
+                    <dt className="text-slate-500">Per period</dt>
+                    <dd className="font-medium text-slate-900">{money(s.totals.total)}</dd>
+                  </div>
+                  {period && (
+                    <div className="flex items-center justify-between">
                       <dt className="text-slate-500">Next invoice</dt>
-                      <dd className="text-right">{date(s.nextBillingDate)}</dd>
-                    </>
+                      <dd className="flex items-center gap-2 text-slate-900">
+                        <CycleRing day={period.day} days={period.days} size={16} />
+                        {date(s.nextBillingDate)}
+                      </dd>
+                    </div>
                   )}
                   {s.status === 'QUOTATION' && s.quoteExpiresAt && (
-                    <>
+                    <div className="flex items-baseline justify-between">
                       <dt className="text-slate-500">Quote valid until</dt>
-                      <dd className="text-right">{date(s.quoteExpiresAt)}</dd>
-                    </>
+                      <dd className="text-slate-900">{date(s.quoteExpiresAt)}</dd>
+                    </div>
+                  )}
+                  {s.status === 'PAUSED' && (
+                    <div className="flex items-baseline justify-between">
+                      <dt className="text-slate-500">Paused since</dt>
+                      <dd className="text-slate-900">{date(s.pausedAt)}</dd>
+                    </div>
                   )}
                   {s.expiryDate && (
-                    <>
+                    <div className="flex items-baseline justify-between">
                       <dt className="text-slate-500">{s.status === 'CLOSED' ? 'Ended' : 'Expires'}</dt>
-                      <dd className="text-right">{date(s.closedAt ?? s.expiryDate)}</dd>
-                    </>
+                      <dd className="text-slate-900">{date(s.closedAt ?? s.expiryDate)}</dd>
+                    </div>
                   )}
                 </dl>
-                {s.status === 'PAUSED' && (
-                  <p className="flex items-center gap-2 rounded-md bg-amber-50 px-3 py-2 text-amber-800">
-                    <CalendarClock className="h-4 w-4" /> Paused since {date(s.pausedAt)} — no invoices while paused.
-                  </p>
-                )}
-                <SelfServiceActions sub={s} />
-              </div>
-            </Card>
-          ))}
+                {s.status === 'PAUSED' && <p className="mt-3 text-xs text-slate-500">No invoices are issued while a subscription is paused</p>}
+                <div className="mt-auto pt-5">
+                  <SelfServiceActions sub={s} compact />
+                </div>
+              </section>
+            )
+          })}
         </div>
       )}
     </>
@@ -155,7 +169,7 @@ export function PortalSubscriptionDetailPage() {
             {s.invoices.length === 0 ? (
               <p className="text-sm text-slate-500">No invoices yet.</p>
             ) : (
-              <div className="-m-4">
+              <div className="-m-5">
                 <Table headers={['Number', 'Period', 'Due', 'Status', 'Total']}>
                   {s.invoices.map((i) => (
                     <tr key={i.id}>

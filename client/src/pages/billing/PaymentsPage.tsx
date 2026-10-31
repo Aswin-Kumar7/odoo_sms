@@ -2,7 +2,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { api, qs, type Paginated } from '../../api/client'
 import { PAYMENT_METHODS, paymentMethodLabel, type PaymentListItem, type PaymentSummary } from '../../api/types'
-import { Card, EmptyState, ErrorState, Field, Input, PageHeader, Pagination, Select, Spinner, Table, Td } from '../../components/ui'
+import { Card, EmptyState, ErrorState, Field, Input, PageHeader, Pagination, Select, Spinner, Stat, Table, Td } from '../../components/ui'
 import { date, money } from '../../lib/format'
 
 type ListResponse = Paginated<PaymentListItem> & { summary: PaymentSummary }
@@ -31,28 +31,20 @@ export function PaymentsPage() {
 
   return (
     <>
-      <PageHeader title="Payments" subtitle="Every payment recorded against an invoice, by staff or through the customer portal." />
+      <PageHeader title="Payments" subtitle="Every payment recorded against an invoice, by the team or through the customer portal" />
 
       {summary && (
         <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase tracking-wide text-slate-500">Collected{from || to || method || q ? ' (filtered)' : ''}</p>
-            <p className="mt-1 text-2xl font-semibold text-slate-900">{money(summary.amount)}</p>
-            <p className="text-xs text-slate-500">{summary.count} payment(s)</p>
-          </div>
+          <Stat label={`Collected${from || to || method || q ? ', filtered' : ''}`} value={money(summary.amount)} hint={`${summary.count.toLocaleString('en-IN')} payments`} />
           {summary.byMethod.slice(0, 3).map((m) => (
-            <div key={m.method} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs uppercase tracking-wide text-slate-500">{paymentMethodLabel(m.method)}</p>
-              <p className="mt-1 text-xl font-semibold text-slate-900">{money(m.amount)}</p>
-              <p className="text-xs text-slate-500">{m.count} payment(s)</p>
-            </div>
+            <Stat key={m.method} label={paymentMethodLabel(m.method)} value={money(m.amount)} hint={`${m.count.toLocaleString('en-IN')} payments`} />
           ))}
         </div>
       )}
 
       <Card>
-        <div className="-m-4">
-          <div className="grid grid-cols-1 gap-3 border-b border-slate-200 p-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="-m-5">
+          <div className="grid grid-cols-1 gap-3 border-b border-line p-4 sm:grid-cols-2 lg:grid-cols-4">
             <Field label="Search">
               <Input placeholder="Invoice, customer or note" defaultValue={q} onChange={(e) => set({ q: e.target.value })} />
             </Field>
@@ -83,7 +75,7 @@ export function PaymentsPage() {
             <>
               <Table headers={['Paid on', 'Invoice', 'Customer', 'Method', 'Note', 'Recorded by', 'Amount']}>
                 {list.data!.data.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50">
+                  <tr key={p.id} className="hover:bg-slate-100/60">
                     <Td>{date(p.paidOn)}</Td>
                     <Td className="font-medium">
                       <Link to={`/invoices/${p.invoice.id}`} className="text-brand-700 hover:underline">

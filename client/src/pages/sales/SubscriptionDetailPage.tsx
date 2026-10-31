@@ -100,7 +100,7 @@ export function SubscriptionDetailPage() {
             {s.invoices.length === 0 ? (
               <p className="text-sm text-slate-500">No invoices yet. They are generated from this subscription on each billing date once it is active.</p>
             ) : (
-              <div className="-m-4">
+              <div className="-m-5">
                 <Table headers={['Invoice', 'Period', 'Status', 'Due', 'Total', 'Paid']}>
                   {s.invoices.map((inv) => (
                     <tr key={inv.id}>
@@ -183,7 +183,7 @@ export function SubscriptionDetailPage() {
                 {[s.plan.pausable && 'pausable', s.plan.closable && 'closable', s.plan.renewable && 'renewable', s.plan.autoClose && 'auto-closes'].filter(Boolean).join(', ') || 'none'}
               </dd>
             </dl>
-            {s.notes && <p className="mt-3 rounded bg-slate-50 p-2 text-sm text-slate-600">{s.notes}</p>}
+            {s.notes && <p className="mt-3 rounded-lg bg-slate-100 p-2 text-sm text-slate-600">{s.notes}</p>}
           </Card>
           <DiscountsPanel sub={s} onSaved={setDetail} />
           <Card title="Timeline">
@@ -332,7 +332,7 @@ function LinesEditor({ sub, onSaved, onStateChange }: { sub: Subscription; onSav
   if (!products.data || !taxes.data) {
     return (
       <Card title="Lines">
-        {products.isError || taxes.isError ? <ErrorState error={products.error ?? taxes.error} /> : <Spinner label="Loading catalogue…" />}
+        {products.isError || taxes.isError ? <ErrorState error={products.error ?? taxes.error} /> : <Spinner label="Loading catalogue" />}
       </Card>
     )
   }
@@ -466,7 +466,7 @@ function LinesForm({
             const product = productById.get(watch(`lines.${i}.productId`))
             const amount = (Number(watch(`lines.${i}.quantity`)) || 0) * (Number(watch(`lines.${i}.unitPrice`)) || 0)
             return (
-              <div key={field.id} className="grid grid-cols-12 items-end gap-2 border-b border-slate-100 pb-3 last:border-0">
+              <div key={field.id} className="grid grid-cols-12 items-end gap-2 border-b border-line pb-3 last:border-0">
                 <div className="col-span-12 md:col-span-4">
                   <Field label="Product" error={errors.lines?.[i]?.productId?.message}>
                     <Select
@@ -533,14 +533,14 @@ function LinesForm({
       )}
       {isDirty && (
         <div className="mt-4 rounded-md border border-dashed border-brand-500/40 bg-brand-50/40 p-3 text-sm">
-          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-brand-700">Preview — not saved yet</p>
+          <p className="mb-1 text-xs font-medium text-brand-700">Preview — not saved yet</p>
           {preview.isError ? (
             <p className="text-xs text-red-600">{(preview.error as Error).message}</p>
           ) : preview.data ? (
             <p className="text-slate-700">
               Subtotal {money(preview.data.subtotal)}
               {preview.data.discountTotal > 0 && <span className="text-emerald-700"> − discounts {money(preview.data.discountTotal)}</span>} + tax {money(preview.data.taxTotal)} ={' '}
-              <span className="font-semibold">{money(preview.data.total)}</span> per period
+              <span className="font-medium">{money(preview.data.total)}</span> per period
             </p>
           ) : (
             <p className="text-xs text-slate-500">Calculating…</p>
@@ -588,7 +588,7 @@ function DiscountsPanel({ sub, onSaved }: { sub: Subscription; onSaved: (s: Subs
           {sub.discounts.map(({ discount: d }) => {
             const o = outcome.get(d.id)
             return (
-              <li key={d.id} className="flex items-start justify-between gap-2 rounded-md border border-slate-200 p-2">
+              <li key={d.id} className="flex items-start justify-between gap-2 rounded-md border border-line p-2">
                 <div className="min-w-0">
                   <p className="flex items-center gap-1.5 text-sm font-medium text-slate-800">
                     <Tag className="h-3.5 w-3.5 text-brand-600" /> <span className="font-mono text-xs">{d.code}</span> {discountValue(d)}

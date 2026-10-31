@@ -124,7 +124,7 @@ export function TemplateFormPage() {
               <Textarea {...register('notes')} />
             </Field>
             <p className="text-sm text-slate-600">
-              Per period before tax: <span className="font-semibold">{money(linesValue)}</span>
+              Per period before tax: <span className="font-medium">{money(linesValue)}</span>
               {plan && plan.minQuantity > 1 && <span className="block text-xs text-amber-700">This plan needs at least {plan.minQuantity} per line.</span>}
             </p>
           </div>

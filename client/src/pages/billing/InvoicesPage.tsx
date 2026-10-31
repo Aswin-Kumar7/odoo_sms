@@ -79,8 +79,8 @@ export function InvoicesPage() {
         }
       />
       <Card>
-        <div className="-m-4">
-          <div className="flex gap-1 overflow-x-auto border-b border-slate-200 px-4 pt-3">
+        <div className="-m-5">
+          <div className="flex gap-1 overflow-x-auto border-b border-line px-4 pt-3">
             {TABS.map((t) => (
               <button
                 key={t.key || 'all'}
@@ -95,8 +95,8 @@ export function InvoicesPage() {
               </button>
             ))}
           </div>
-          <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 p-4">
-            <Input placeholder="Search number or customer" className="max-w-xs" defaultValue={q} onChange={(e) => set({ q: e.target.value })} />
+          <div className="flex flex-wrap items-center gap-3 border-b border-line p-4">
+            <Input placeholder="Search" aria-label="Search by number or customer" className="max-w-xs" defaultValue={q} onChange={(e) => set({ q: e.target.value })} />
             {drafts.length > 0 && (
               <Button variant="ghost" onClick={() => setSelected(new Set(drafts.map((d) => d.id)))}>
                 Select all drafts on this page ({drafts.length})
@@ -113,7 +113,7 @@ export function InvoicesPage() {
             <>
               <Table headers={['', 'Number', 'Customer', 'Subscription', 'Issued', 'Due', 'Status', 'Total', 'Outstanding']}>
                 {list.data!.data.map((i) => (
-                  <tr key={i.id} className="cursor-pointer hover:bg-slate-50" onClick={() => navigate(`/invoices/${i.id}`)}>
+                  <tr key={i.id} className="cursor-pointer hover:bg-slate-100/60" onClick={() => navigate(`/invoices/${i.id}`)}>
                     <Td>
                       {i.status === 'DRAFT' && (
                         <input type="checkbox" checked={selected.has(i.id)} onClick={(e) => e.stopPropagation()} onChange={() => toggle(i.id)} aria-label={`Select ${i.number}`} />

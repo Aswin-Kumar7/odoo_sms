@@ -133,7 +133,7 @@ export function NewSubscriptionPage() {
             </Field>
           )}
           {template && (
-            <ul className="rounded-md bg-slate-50 p-3 text-sm text-slate-600">
+            <ul className="rounded-lg bg-slate-100 p-3 text-sm text-slate-600">
               {template.lines.map((l) => (
                 <li key={l.id}>
                   {l.quantity} × {l.product.name}

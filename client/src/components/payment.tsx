@@ -66,7 +66,7 @@ export function RecordPaymentModal({
         }}
       >
         <p className="text-sm text-slate-600">
-          Outstanding: <span className="font-semibold text-slate-900">{money(outstanding)}</span>. A smaller amount is recorded as a part payment.
+          Outstanding: <span className="font-medium text-slate-900">{money(outstanding)}</span>. A smaller amount is recorded as a part payment.
         </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Method">
@@ -97,7 +97,7 @@ export function RecordPaymentModal({
 
 export function PaymentList({ payments }: { payments: Payment[] }) {
   return (
-    <ul className="divide-y divide-slate-100 text-sm">
+    <ul className="divide-y divide-line text-sm">
       {payments.map((p) => (
         <li key={p.id} className="flex items-start justify-between gap-3 py-2">
           <div>

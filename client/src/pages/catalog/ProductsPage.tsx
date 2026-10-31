@@ -43,9 +43,9 @@ export function ProductsPage() {
         }
       />
       <Card>
-        <div className="-m-4">
-          <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 p-4">
-            <Input placeholder="Search products" className="max-w-xs" value={q} onChange={(e) => reset(setQ)(e.target.value)} />
+        <div className="-m-5">
+          <div className="flex flex-wrap items-center gap-3 border-b border-line p-4">
+            <Input placeholder="Search" aria-label="Search products" className="max-w-xs" value={q} onChange={(e) => reset(setQ)(e.target.value)} />
             <Select className="max-w-[12rem]" value={type} onChange={(e) => reset(setType)(e.target.value)}>
               <option value="">All types</option>
               {PRODUCT_TYPES.map((t) => (
@@ -71,7 +71,7 @@ export function ProductsPage() {
                 {list.data!.data.map((p) => {
                   const margin = p.salesPrice > 0 ? Math.round(((p.salesPrice - p.costPrice) / p.salesPrice) * 100) : 0
                   return (
-                    <tr key={p.id} className="hover:bg-slate-50">
+                    <tr key={p.id} className="hover:bg-slate-100/60">
                       <Td className="font-medium">
                         <Link to={`/products/${p.id}`} className="text-brand-700 hover:underline">
                           {p.name}

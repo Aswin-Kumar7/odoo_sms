@@ -39,7 +39,7 @@ export function PlansPage() {
     <>
       <PageHeader
         title="Recurring plans"
-        subtitle="How often subscriptions bill, the base fee per period, and what customers may do with them."
+        subtitle="How often subscriptions bill, the base fee per period, and what customers may do with them"
         actions={
           isAdmin && (
             <Button onClick={() => setEditing('new')}>
@@ -49,7 +49,7 @@ export function PlansPage() {
         }
       />
       <Card>
-        <div className="-m-4">
+        <div className="-m-5">
           {plans.isPending ? (
             <Spinner />
           ) : plans.isError ? (

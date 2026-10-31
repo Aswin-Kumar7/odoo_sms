@@ -47,8 +47,8 @@ export function ResetPasswordPage() {
   })
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4" noValidate>
-      <h2 className="text-lg font-semibold text-slate-900">Choose a new password</h2>
+    <form onSubmit={onSubmit} className="space-y-5" noValidate>
+      <h1 className="text-2xl font-medium tracking-[-0.015em] text-slate-900">Choose a new password</h1>
       <Field label="New password" error={errors.password?.message}>
         <Input type="password" autoComplete="new-password" autoFocus {...register('password')} />
       </Field>
@@ -56,7 +56,7 @@ export function ResetPasswordPage() {
       <Field label="Confirm password" error={errors.confirm?.message}>
         <Input type="password" autoComplete="new-password" {...register('confirm')} />
       </Field>
-      <Button type="submit" className="w-full" loading={isSubmitting}>
+      <Button type="submit" size="lg" className="w-full" loading={isSubmitting}>
         Update password
       </Button>
     </form>

@@ -1,12 +1,127 @@
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
 @import "tailwindcss";
 
+/* Dark mode follows a class on <html>, set before first paint by index.html. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens. Surfaces, borders and text come from one graphite ramp (the slate scale is
+ * remapped to it), so every screen themes from the same few values. The Odoo plum is the
+ * single accent. Status hues are toned down and only mark meaning.
+ */
 @theme {
-  --color-brand-50: #f5f0f4;
-  --color-brand-100: #e9dde6;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --color-brand-50: #f6f1f5;
+  --color-brand-100: #ecdfe8;
   --color-brand-500: #875a7b;
   --color-brand-600: #714b67;
   --color-brand-700: #5c3d54;
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Graphite ramp, light */
+  --color-slate-50: #fafafa; /* page */
+  --color-slate-100: #f3f3f4; /* raised: active row, input fill, chips */
+  --color-slate-200: #e6e6e8;
+  --color-slate-300: #d4d4d8;
+  --color-slate-400: #9f9fa6;
+  --color-slate-500: #6f6f76; /* muted */
+  --color-slate-600: #52525a; /* secondary */
+  --color-slate-700: #3c3c43;
+  --color-slate-800: #26262b;
+  --color-slate-900: #171719; /* primary */
+
+  --color-surface: #ffffff; /* cards, panels */
+  --color-sunken: #f6f6f7; /* sidebar */
+  --color-line: rgb(23 23 25 / 0.09); /* hairline */
+  --color-line-strong: rgb(23 23 25 / 0.16);
+  --color-paper: #fbf8f3; /* the invoice "paper" in illustrations */
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --color-slate-50: #131315;
+  --color-slate-100: #212124;
+  --color-slate-200: #2b2b2f;
+  --color-slate-300: #3a3a3f;
+  --color-slate-400: #6c6c73;
+  --color-slate-500: #8b8b92;
+  --color-slate-600: #a7a7ad;
+  --color-slate-700: #c6c6cb;
+  --color-slate-800: #dedee2;
+  --color-slate-900: #ededee;
+
+  --color-surface: #19191b;
+  --color-sunken: #0f0f10;
+  --color-line: rgb(237 237 238 / 0.08);
+  --color-line-strong: rgb(237 237 238 / 0.14);
+  --color-paper: #f4efe6;
+
+  --color-brand-50: #2a2028;
+  --color-brand-100: #352833;
+  --color-brand-500: #b98aac;
+  --color-brand-600: #c99dbd;
+  --color-brand-700: #d8b6cf;
+
+  /* Status hues for dark surfaces: tinted backgrounds stay dark, text gets lighter. */
+  --color-emerald-50: #13241b;
+  --color-emerald-100: #173022;
+  --color-emerald-500: #3fb27f;
+  --color-emerald-700: #5cc996;
+  --color-emerald-800: #7ad6aa;
+  --color-red-50: #2a1617;
+  --color-red-100: #36191b;
+  --color-red-200: #4a2326;
+  --color-red-300: #6b2f33;
+  --color-red-500: #e5484d;
+  --color-red-600: #e5484d;
+  --color-red-700: #f07a7e;
+  --color-amber-50: #2a2114;
+  --color-amber-100: #352916;
+  --color-amber-400: #d9a441;
+  --color-amber-500: #e0ad4c;
+  --color-amber-700: #e8bd6a;
+  --color-amber-800: #f0cb85;
+  --color-sky-100: #14263a;
+  --color-sky-400: #5a9fd6;
+  --color-sky-800: #8cc0ea;
+  --color-indigo-100: #1d1f3b;
+  --color-indigo-400: #8088d8;
+  --color-indigo-800: #aab0f0;
+  --color-teal-500: #3fae9f;
+}
+
+/* Paper and print are always light, whatever the screen theme. */
+@media print {
+  .dark {
+    color-scheme: light;
+  }
+  :root,
+  .dark {
+    --color-slate-50: #ffffff;
+    --color-slate-100: #f3f3f4;
+    --color-slate-200: #e6e6e8;
+    --color-slate-400: #9f9fa6;
+    --color-slate-500: #6f6f76;
+    --color-slate-600: #52525a;
+    --color-slate-700: #3c3c43;
+    --color-slate-800: #26262b;
+    --color-slate-900: #171719;
+    --color-surface: #ffffff;
+    --color-line: rgb(23 23 25 / 0.12);
+    --color-emerald-700: #047857;
+    --color-red-600: #dc2626;
+  }
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
 }
 
 html,
@@ -17,13 +132,31 @@ body,
 
 body {
   @apply bg-slate-50 text-slate-800 antialiased;
+  font-feature-settings: "ss01" on;
+  font-variant-numeric: tabular-nums;
 }
 
-@media print {
-  .no-print {
-    display: none !important;
+::selection {
+  background: var(--color-brand-100);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+/* One entrance for main content: a short fade and rise. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
-  body {
-    background: white;
+}
+.animate-rise {
+  animation: rise 360ms var(--ease-out) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise {
+    animation: none;
   }
 }

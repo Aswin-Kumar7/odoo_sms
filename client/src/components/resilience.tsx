@@ -2,6 +2,7 @@ import { Component, useEffect, useSyncExternalStore, type ErrorInfo, type ReactN
 import { useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Loader2 } from 'lucide-react'
 import { outage } from '../lib/outage'
+import { buttonClass } from './ui'
 
 // ── Outage banner ─────────────────────────────────────────────────────────────
 // Any request that fails because the server or database is unreachable (network error or
@@ -53,11 +54,11 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
     if (!this.state.error) return this.props.children
     return (
       <div className="flex min-h-full items-center justify-center p-6">
-        <div className="max-w-md rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
+        <div className="max-w-md rounded-xl border border-line bg-surface p-8 text-center shadow-[0_1px_2px_rgb(0_0_0/0.04)] dark:shadow-none">
           <AlertTriangle className="mx-auto h-8 w-8 text-amber-500" />
-          <h1 className="mt-3 text-lg font-semibold text-slate-900">Something went wrong on this page</h1>
+          <h1 className="mt-3 text-lg font-medium text-slate-900">Something went wrong on this page</h1>
           <p className="mt-1 text-sm text-slate-500">Reloading usually fixes it. Your saved data is safe.</p>
-          <button onClick={() => window.location.reload()} className="mt-4 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+          <button onClick={() => window.location.reload()} className={buttonClass('primary', 'md', 'mt-4')}>
             Reload
           </button>
         </div>

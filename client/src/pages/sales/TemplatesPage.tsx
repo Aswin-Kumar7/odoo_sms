@@ -32,7 +32,7 @@ export function TemplatesPage() {
     <>
       <PageHeader
         title="Quotation templates"
-        subtitle="Start a quote from a ready-made plan and product lines instead of building it from scratch."
+        subtitle="Start a quote from a ready-made plan and product lines instead of building it from scratch"
         actions={
           <>
             <label className="flex items-center gap-2 text-sm text-slate-600">
@@ -92,7 +92,7 @@ export function TemplatesPage() {
                   <dt className="text-slate-500">Used by</dt>
                   <dd>{t._count?.subscriptions ?? 0} subscriptions</dd>
                 </dl>
-                <ul className="space-y-1 border-t border-slate-100 pt-2 text-sm">
+                <ul className="space-y-1 border-t border-line pt-2 text-sm">
                   {t.lines.map((l) => (
                     <li key={l.id} className="flex justify-between">
                       <span>

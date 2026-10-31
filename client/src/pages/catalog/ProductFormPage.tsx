@@ -203,7 +203,7 @@ export function ProductFormPage() {
               {variants.fields.map((field, i) => {
                 const extra = Number(watch(`variants.${i}.priceExtra`)) || 0
                 return (
-                  <div key={field.id} className="rounded-md border border-slate-200 p-3">
+                  <div key={field.id} className="rounded-md border border-line p-3">
                     <div className="grid grid-cols-2 gap-2">
                       <Field label="Attribute" error={errors.variants?.[i]?.attribute?.message}>
                         <Input placeholder="Brand" {...register(`variants.${i}.attribute`)} />

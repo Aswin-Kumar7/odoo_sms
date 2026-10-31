@@ -39,7 +39,7 @@ export function DiscountsPage() {
     <>
       <PageHeader
         title="Discounts"
-        subtitle="Once attached to a subscription, a discount appears on every invoice automatically and stops when it expires or its usage limit is reached."
+        subtitle="Once attached to a subscription, a discount appears on every invoice automatically and stops when it expires or its usage limit is reached"
         actions={
           isAdmin && (
             <Button onClick={() => setEditing('new')}>
@@ -49,7 +49,7 @@ export function DiscountsPage() {
         }
       />
       <Card>
-        <div className="-m-4">
+        <div className="-m-5">
           {list.isPending ? (
             <Spinner />
           ) : list.isError ? (
@@ -60,7 +60,7 @@ export function DiscountsPage() {
             <Table headers={['Code', 'Discount', 'Applies to', 'Used', 'Subscriptions', 'Status', '']}>
               {list.data!.map((d) => (
                 <tr key={d.id}>
-                  <Td className="font-mono text-xs font-semibold text-slate-800">{d.code}</Td>
+                  <Td className="font-mono text-xs font-medium text-slate-800">{d.code}</Td>
                   <Td>
                     <span className="font-medium text-slate-900">{discountValue(d)}</span>
                     <span className="block text-xs text-slate-500">{d.name}</span>
@@ -200,7 +200,7 @@ function DiscountModal({ discount, onClose }: { discount: Discount | null; onClo
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Code" error={errors.code?.message} hint="Upper-cased automatically">
-            <Input autoFocus placeholder="SEATS10" className="uppercase" {...register('code')} />
+            <Input autoFocus placeholder="SEATS10" className="" {...register('code')} />
           </Field>
           <Field label="Name" error={errors.name?.message}>
             <Input placeholder="10% for 5+ seats" {...register('name')} />

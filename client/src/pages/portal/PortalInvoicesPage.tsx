@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { ArrowLeft, CreditCard, Printer } from 'lucide-react'
 import { api, qs, type Paginated } from '../../api/client'
 import type { InvoiceListItem, Outstanding, PortalInvoice } from '../../api/types'
-import { Button, Card, EmptyState, ErrorState, Modal, PageHeader, Pagination, Spinner, Table, Td } from '../../components/ui'
+import { Button, Card, EmptyState, ErrorState, Modal, PageHeader, Pagination, Spinner, Stat, Table, Td } from '../../components/ui'
 import { InvoiceDocument, InvoiceStatusBadge, lastDay } from '../../components/invoice'
 import { applyServerError } from '../../lib/forms'
 import { date, money } from '../../lib/format'
@@ -35,24 +35,21 @@ export function PortalInvoicesPage() {
 
   return (
     <>
-      <PageHeader title="My invoices" subtitle="View, print and pay your invoices." />
+      <PageHeader title="Invoices" subtitle="View, print and pay your invoices" />
       {due && (
         <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase tracking-wide text-slate-500">Outstanding</p>
-            <p className="mt-1 text-2xl font-semibold text-slate-900">{money(due.amount)}</p>
-            <p className="text-xs text-slate-500">{due.count} unpaid invoice(s)</p>
-          </div>
-          <div className={clsx('rounded-lg border p-4 shadow-sm', due.overdue > 0 ? 'border-red-200 bg-red-50' : 'border-slate-200 bg-white')}>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Overdue</p>
-            <p className={clsx('mt-1 text-2xl font-semibold', due.overdue > 0 ? 'text-red-700' : 'text-slate-900')}>{money(due.overdue)}</p>
-            <p className="text-xs text-slate-500">{due.overdue > 0 ? 'Past the due date — please pay as soon as you can' : 'Nothing overdue'}</p>
-          </div>
+          <Stat label="Outstanding" value={money(due.amount)} hint={`${due.count} unpaid invoice${due.count === 1 ? '' : 's'}`} />
+          <Stat
+            label="Overdue"
+            value={money(due.overdue)}
+            tone={due.overdue > 0 ? 'danger' : undefined}
+            hint={due.overdue > 0 ? 'Past the due date' : 'Nothing overdue'}
+          />
         </div>
       )}
       <Card>
-        <div className="-m-4">
-          <div className="flex gap-1 overflow-x-auto border-b border-slate-200 px-4 pt-3">
+        <div className="-m-5">
+          <div className="flex gap-1 overflow-x-auto border-b border-line px-4 pt-3">
             {TABS.map((t) => (
               <button
                 key={t.key || 'all'}
@@ -77,7 +74,7 @@ export function PortalInvoicesPage() {
             <>
               <Table headers={['Number', 'Subscription', 'Period', 'Due', 'Status', 'Total', 'Amount due']}>
                 {list.data!.data.map((i) => (
-                  <tr key={i.id} className="cursor-pointer hover:bg-slate-50" onClick={() => navigate(`/portal/invoices/${i.id}`)}>
+                  <tr key={i.id} className="cursor-pointer hover:bg-slate-100/60" onClick={() => navigate(`/portal/invoices/${i.id}`)}>
                     <Td className="font-medium text-brand-700">{i.number}</Td>
                     <Td className="text-slate-500">{i.subscription.number}</Td>
                     <Td>
@@ -88,7 +85,7 @@ export function PortalInvoicesPage() {
                       <InvoiceStatusBadge status={i.status} overdue={i.overdue} />
                     </Td>
                     <Td className="text-right">{money(i.total)}</Td>
-                    <Td className={clsx('text-right', i.status === 'CONFIRMED' && 'font-semibold')}>{i.status === 'CONFIRMED' ? money(i.total - i.amountPaid) : '—'}</Td>
+                    <Td className={clsx('text-right', i.status === 'CONFIRMED' && 'font-medium')}>{i.status === 'CONFIRMED' ? money(i.total - i.amountPaid) : '—'}</Td>
                   </tr>
                 ))}
               </Table>
@@ -131,7 +128,7 @@ export function PortalInvoiceDetailPage() {
     <>
       <div className="no-print">
         <Link to="/portal/invoices" className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700">
-          <ArrowLeft className="h-4 w-4" /> My invoices
+          <ArrowLeft className="h-4 w-4" /> Invoices
         </Link>
         <PageHeader
           title={i.number}
@@ -168,9 +165,9 @@ export function PortalInvoiceDetailPage() {
           }
         >
           <p className="text-sm text-slate-600">
-            You are paying <span className="font-semibold text-slate-900">{money(i.outstanding)}</span> for {i.number}.
+            You are paying <span className="font-medium text-slate-900">{money(i.outstanding)}</span> for {i.number}.
           </p>
-          <p className="mt-2 rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-500">Demo checkout: no card is charged. The payment is recorded exactly as a real one would be.</p>
+          <p className="mt-2 rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-500">Demo checkout: no card is charged. The payment is recorded exactly as a real one would be</p>
         </Modal>
       )}
     </>

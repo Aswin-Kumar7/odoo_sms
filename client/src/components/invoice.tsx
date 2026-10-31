@@ -2,6 +2,7 @@ import type { Invoice } from '../api/types'
 import { paymentMethodLabel, periodLabel } from '../api/types'
 import { date, money, percent } from '../lib/format'
 import { Badge } from './ui'
+import { LogoMark } from './brand'
 
 /** The period end is stored exclusive (= next period's start); people expect the last day. */
 export const lastDay = (iso: string) => new Date(new Date(iso).getTime() - 86_400_000).toISOString()
@@ -16,27 +17,27 @@ export function InvoiceStatusBadge({ status, overdue }: { status: string; overdu
  */
 export function InvoiceDocument({ inv }: { inv: Omit<Invoice, 'timeline' | 'billingRun'> }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm print:border-0 print:p-0 print:shadow-none">
-      <header className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-4">
+    <article className="rounded-lg border border-line bg-surface p-6 shadow-[0_1px_2px_rgb(0_0_0/0.04)] dark:shadow-none print:border-0 print:p-0 print:shadow-none">
+      <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-brand-600" />
-            <span className="text-lg font-semibold text-slate-900">Brightloop Software</span>
+            <LogoMark className="h-7 w-7" />
+            <span className="text-lg font-medium text-slate-900">Brightloop Software</span>
           </div>
           <p className="mt-1 text-xs text-slate-500">Subscription billing · billing@brightloop.test</p>
         </div>
         <div className="text-right">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Tax invoice</p>
-          <p className="text-xl font-semibold text-slate-900">{inv.number}</p>
+          <p className="text-xs text-slate-500">Tax invoice</p>
+          <p className="text-xl font-medium text-slate-900">{inv.number}</p>
           <div className="mt-1">
             <InvoiceStatusBadge status={inv.status} overdue={inv.overdue} />
           </div>
         </div>
       </header>
 
-      <section className="grid grid-cols-1 gap-4 border-b border-slate-200 py-4 text-sm sm:grid-cols-2">
+      <section className="grid grid-cols-1 gap-4 border-b border-line py-4 text-sm sm:grid-cols-2">
         <div>
-          <p className="text-xs uppercase tracking-wide text-slate-500">Billed to</p>
+          <p className="text-xs text-slate-500">Billed to</p>
           <p className="font-medium text-slate-900">{inv.customer.name}</p>
           <p className="text-slate-600">{inv.customer.email}</p>
           {inv.customer.address && <p className="whitespace-pre-line text-slate-600">{inv.customer.address}</p>}
@@ -62,7 +63,7 @@ export function InvoiceDocument({ inv }: { inv: Omit<Invoice, 'timeline' | 'bill
       <div className="overflow-x-auto py-4">
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+            <tr className="border-b border-line text-left text-xs text-slate-500">
               <th className="py-2 pr-4">Description</th>
               <th className="py-2 pr-4 text-right">Qty</th>
               <th className="py-2 pr-4 text-right">Unit price</th>
@@ -71,7 +72,7 @@ export function InvoiceDocument({ inv }: { inv: Omit<Invoice, 'timeline' | 'bill
               <th className="py-2 text-right">Amount</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-line">
             {inv.lines.map((l) => (
               <tr key={l.id}>
                 <td className="py-2 pr-4">{l.description}</td>
@@ -88,11 +89,11 @@ export function InvoiceDocument({ inv }: { inv: Omit<Invoice, 'timeline' | 'bill
         </table>
       </div>
 
-      <section className="flex flex-wrap justify-between gap-6 border-t border-slate-200 pt-4 text-sm">
+      <section className="flex flex-wrap justify-between gap-6 border-t border-line pt-4 text-sm">
         <div className="space-y-1 text-slate-600">
           {inv.discounts.length > 0 && (
             <>
-              <p className="text-xs uppercase tracking-wide text-slate-500">Discounts applied</p>
+              <p className="text-xs text-slate-500">Discounts applied</p>
               {inv.discounts.map((d) => (
                 <p key={d.discountId}>
                   <span className="font-mono text-xs">{d.discount.code}</span> {d.discount.name}: −{money(d.amount)}
@@ -102,7 +103,7 @@ export function InvoiceDocument({ inv }: { inv: Omit<Invoice, 'timeline' | 'bill
           )}
           {inv.payments.length > 0 && (
             <>
-              <p className="pt-2 text-xs uppercase tracking-wide text-slate-500">Payments received</p>
+              <p className="pt-2 text-xs text-slate-500">Payments received</p>
               {inv.payments.map((p) => (
                 <p key={p.id}>
                   {date(p.paidOn)} · {paymentMethodLabel(p.method)} · {money(p.amount)}
@@ -126,7 +127,7 @@ export function InvoiceDocument({ inv }: { inv: Omit<Invoice, 'timeline' | 'bill
             <dt className="text-slate-500">Tax</dt>
             <dd>{money(inv.taxTotal)}</dd>
           </div>
-          <div className="flex justify-between border-t border-slate-200 pt-1 text-base font-semibold">
+          <div className="flex justify-between border-t border-line pt-1 text-base font-medium">
             <dt>Total</dt>
             <dd>{money(inv.total)}</dd>
           </div>
@@ -137,7 +138,7 @@ export function InvoiceDocument({ inv }: { inv: Omit<Invoice, 'timeline' | 'bill
             </div>
           )}
           {inv.status !== 'CANCELLED' && (
-            <div className="flex justify-between font-semibold text-slate-900">
+            <div className="flex justify-between font-medium text-slate-900">
               <dt>Amount due</dt>
               <dd>{money(inv.outstanding)}</dd>
             </div>

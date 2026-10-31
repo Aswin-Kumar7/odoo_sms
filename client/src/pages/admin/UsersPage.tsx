@@ -57,8 +57,8 @@ export function UsersPage() {
         }
       />
       <Card className="overflow-hidden" title={undefined}>
-        <div className="-m-4">
-          <div className="flex flex-wrap gap-3 border-b border-slate-200 p-4">
+        <div className="-m-5">
+          <div className="flex flex-wrap gap-3 border-b border-line p-4">
             <Input
               placeholder="Search name or email"
               className="max-w-xs"

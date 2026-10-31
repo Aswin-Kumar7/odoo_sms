@@ -40,8 +40,8 @@ export function SignupPage() {
   })
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4" noValidate>
-      <h2 className="text-lg font-semibold text-slate-900">Create your account</h2>
+    <form onSubmit={onSubmit} className="space-y-5" noValidate>
+      <h1 className="text-2xl font-medium tracking-[-0.015em] text-slate-900">Create your account</h1>
       <Field label="Your name" error={errors.name?.message}>
         <Input autoComplete="name" autoFocus {...register('name')} />
       </Field>
@@ -58,7 +58,7 @@ export function SignupPage() {
       <Field label="Confirm password" error={errors.confirm?.message}>
         <Input type="password" autoComplete="new-password" {...register('confirm')} />
       </Field>
-      <Button type="submit" className="w-full" loading={isSubmitting}>
+      <Button type="submit" size="lg" className="w-full" loading={isSubmitting}>
         Create account
       </Button>
       <p className="text-center text-sm text-slate-500">

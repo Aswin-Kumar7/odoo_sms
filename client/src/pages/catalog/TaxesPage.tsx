@@ -42,7 +42,7 @@ export function TaxesPage() {
         }
       />
       <Card>
-        <div className="-m-4">
+        <div className="-m-5">
           {taxes.isPending ? (
             <Spinner />
           ) : taxes.isError ? (

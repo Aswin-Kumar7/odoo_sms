@@ -6,6 +6,7 @@ import { Toaster } from 'sonner'
 import { ApiError } from './api/client'
 import { AuthProvider } from './auth/AuthContext'
 import { ErrorBoundary, OutageBanner } from './components/resilience'
+import { useTheme } from './lib/theme'
 import './index.css'
 import App from './App.tsx'
 
@@ -22,6 +23,11 @@ const queryClient = new QueryClient({
   },
 })
 
+function ThemedToaster() {
+  const { theme } = useTheme()
+  return <Toaster position="top-right" theme={theme} toastOptions={{ className: 'font-sans' }} />
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
@@ -32,7 +38,7 @@ createRoot(document.getElementById('root')!).render(
           </AuthProvider>
         </ErrorBoundary>
         <OutageBanner />
-        <Toaster position="top-right" richColors />
+        <ThemedToaster />
       </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,

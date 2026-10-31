@@ -1,24 +1,26 @@
-import { useState, Suspense } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { Suspense, useState } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { clsx } from 'clsx'
-import { Spinner } from '../components/ui'
 import {
   BarChart3,
   Boxes,
   CalendarClock,
   FileText,
   LayoutTemplate,
+  LogOut,
+  Menu,
   Percent,
   Receipt,
   RefreshCcw,
   Repeat,
-  Users,
   UserCog,
+  Users,
   Wallet,
-  Menu,
   X,
   type LucideIcon,
 } from 'lucide-react'
+import { Spinner } from '../components/ui'
+import { Logo, ThemeSwitcher } from '../components/brand'
 
 export type Role = 'ADMIN' | 'STAFF' | 'CUSTOMER'
 
@@ -63,48 +65,69 @@ const NAV: { section: string; items: NavItem[] }[] = [
   },
 ]
 
+const initials = (name?: string) =>
+  (name ?? '?')
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join('')
+
 function SidebarContent({ role, userName, onLogout, onNavigate }: { role: Role; userName?: string; onLogout?: () => void; onNavigate?: () => void }) {
   return (
     <>
-      <div className="flex h-14 items-center gap-2 border-b border-slate-200 px-5">
-        <div className="h-7 w-7 rounded-full bg-brand-600" />
-        <span className="font-semibold text-slate-900">Brightloop</span>
+      <div className="flex h-16 shrink-0 items-center px-5">
+        <Logo />
       </div>
-      <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 overflow-y-auto px-3 pb-4">
         {NAV.map(({ section, items }) => {
           const visible = items.filter((i) => i.roles.includes(role))
           if (visible.length === 0) return null
           return (
-            <div key={section}>
-              <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">{section}</p>
-              {visible.map(({ to, label, icon: Icon }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  onClick={onNavigate}
-                  className={({ isActive }) =>
-                    clsx(
-                      'flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm',
-                      isActive ? 'bg-brand-50 font-medium text-brand-700' : 'text-slate-600 hover:bg-slate-100',
-                    )
-                  }
-                >
-                  <Icon className="h-4 w-4" />
-                  {label}
-                </NavLink>
-              ))}
+            <div key={section} className="mt-5 first:mt-1">
+              <p className="mb-1.5 px-2.5 text-xs text-slate-500">{section}</p>
+              <div className="space-y-0.5">
+                {visible.map(({ to, label, icon: Icon }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    onClick={onNavigate}
+                    className={({ isActive }) =>
+                      clsx(
+                        'flex h-8 items-center gap-2.5 rounded-lg border px-2.5 text-sm transition-colors duration-150',
+                        isActive
+                          ? 'border-line bg-surface font-medium text-slate-900 shadow-[0_1px_2px_rgb(0_0_0/0.05)] dark:bg-slate-100 dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.05)]'
+                          : 'border-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                      )
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <Icon className={clsx('h-4 w-4 shrink-0', isActive ? 'text-brand-600' : 'text-slate-400')} strokeWidth={1.75} />
+                        {label}
+                      </>
+                    )}
+                  </NavLink>
+                ))}
+              </div>
             </div>
           )
         })}
       </nav>
-      <div className="border-t border-slate-200 px-4 py-3 text-sm">
-        <p className="font-medium text-slate-800">{userName ?? '—'}</p>
-        <p className="text-xs text-slate-500">{role}</p>
-        {onLogout && (
-          <button onClick={onLogout} className="mt-2 text-xs font-medium text-brand-600 hover:underline">
-            Sign out
-          </button>
-        )}
+      <div className="shrink-0 space-y-3 border-t border-line p-4">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-xs font-medium text-slate-700">{initials(userName)}</span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-slate-900">{userName ?? '—'}</p>
+            <p className="text-xs text-slate-500">{role === 'ADMIN' ? 'Administrator' : 'Staff'}</p>
+          </div>
+          {onLogout && (
+            <button onClick={onLogout} title="Sign out" className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-800">
+              <LogOut className="h-4 w-4" strokeWidth={1.75} />
+              <span className="sr-only">Sign out</span>
+            </button>
+          )}
+        </div>
+        <ThemeSwitcher className="w-full justify-between [&>button]:flex-1" />
       </div>
     </>
   )
@@ -112,18 +135,19 @@ function SidebarContent({ role, userName, onLogout, onNavigate }: { role: Role; 
 
 export function AppLayout({ role = 'ADMIN', userName, onLogout }: { role?: Role; userName?: string; onLogout?: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { pathname } = useLocation()
   return (
     <div className="flex min-h-full">
-      <aside className="no-print hidden w-60 shrink-0 border-r border-slate-200 bg-white md:flex md:flex-col">
+      <aside className="no-print sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-line bg-sunken md:flex">
         <SidebarContent role={role} userName={userName} onLogout={onLogout} />
       </aside>
 
       {/* Below md the sidebar becomes a slide-over drawer opened from the top bar. */}
       {menuOpen && (
         <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true">
-          <div className="absolute inset-0 bg-slate-900/40" onClick={() => setMenuOpen(false)} />
-          <aside className="relative flex h-full w-64 flex-col bg-white shadow-xl">
-            <button onClick={() => setMenuOpen(false)} className="absolute right-3 top-4 rounded p-1 text-slate-400 hover:bg-slate-100" aria-label="Close menu">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setMenuOpen(false)} />
+          <aside className="animate-rise relative flex h-full w-[272px] flex-col border-r border-line bg-sunken">
+            <button onClick={() => setMenuOpen(false)} className="absolute top-4 right-3 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100" aria-label="Close menu">
               <X className="h-5 w-5" />
             </button>
             <SidebarContent role={role} userName={userName} onLogout={onLogout} onNavigate={() => setMenuOpen(false)} />
@@ -132,17 +156,18 @@ export function AppLayout({ role = 'ADMIN', userName, onLogout }: { role?: Role;
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="no-print flex h-14 items-center gap-3 border-b border-slate-200 bg-white px-4 md:hidden">
-          <button onClick={() => setMenuOpen(true)} className="rounded p-1.5 text-slate-600 hover:bg-slate-100" aria-label="Open menu">
+        <header className="no-print sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line bg-surface/90 px-4 backdrop-blur md:hidden">
+          <button onClick={() => setMenuOpen(true)} className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100" aria-label="Open menu">
             <Menu className="h-5 w-5" />
           </button>
-          <div className="h-6 w-6 rounded-full bg-brand-600" />
-          <span className="font-semibold text-slate-900">Brightloop</span>
+          <Logo />
         </header>
-        <main className="min-w-0 flex-1 px-4 py-6 md:px-8">
+        <main className="mx-auto w-full max-w-[1440px] min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-10">
           <Suspense fallback={<Spinner />}>
-          <Outlet />
-        </Suspense>
+            <div key={pathname} className="animate-rise">
+              <Outlet />
+            </div>
+          </Suspense>
         </main>
       </div>
     </div>

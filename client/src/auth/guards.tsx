@@ -8,8 +8,10 @@ export function RequireAuth({ roles, children }: { roles?: Role[]; children: Rea
   const { user, loading } = useAuth()
   const location = useLocation()
 
-  if (loading) return <Spinner label="Checking your session…" />
-  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
+  if (loading) return <Spinner label="Checking your session" />
+  // Back-office pages send people to the team entrance; the portal to the customer one.
+  const loginPath = roles && !roles.includes('CUSTOMER') ? '/login/team' : '/login'
+  if (!user) return <Navigate to={loginPath} replace state={{ from: location.pathname + location.search }} />
   if (roles && !roles.includes(user.role)) return <Navigate to={homeFor(user.role)} replace />
   return <>{children}</>
 }

@@ -36,8 +36,8 @@ export function CustomersPage() {
         }
       />
       <Card>
-        <div className="-m-4">
-          <div className="border-b border-slate-200 p-4">
+        <div className="-m-5">
+          <div className="border-b border-line p-4">
             <Input
               placeholder="Search name or email"
               className="max-w-xs"

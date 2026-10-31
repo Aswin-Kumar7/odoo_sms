@@ -6,6 +6,14 @@ import { api, qs, type Paginated } from '../../api/client'
 import { periodLabel, type SubscriptionListItem, type SubscriptionStatus } from '../../api/types'
 import { Badge, Button, Card, EmptyState, ErrorState, Input, PageHeader, Pagination, Spinner, Table, Td } from '../../components/ui'
 import { date, humanize } from '../../lib/format'
+import { CycleRing } from '../../components/brand'
+import { currentPeriod } from '../../lib/periods'
+import type { BillingPeriod } from '../../api/types'
+
+function NextBillRing({ next, start, period, interval }: { next: string; start: string; period: BillingPeriod; interval: number }) {
+  const p = currentPeriod(next, period, interval, start)
+  return <CycleRing day={p.day} days={p.days} size={14} />
+}
 
 const TABS: (SubscriptionStatus | '')[] = ['', 'DRAFT', 'QUOTATION', 'CONFIRMED', 'ACTIVE', 'PAUSED', 'CLOSED']
 
@@ -50,8 +58,8 @@ export function SubscriptionsPage() {
         }
       />
       <Card>
-        <div className="-m-4">
-          <div className="flex gap-1 overflow-x-auto border-b border-slate-200 px-4 pt-3">
+        <div className="-m-5">
+          <div className="flex gap-1 overflow-x-auto border-b border-line px-4 pt-3">
             {TABS.map((t) => (
               <button
                 key={t || 'all'}
@@ -65,8 +73,8 @@ export function SubscriptionsPage() {
               </button>
             ))}
           </div>
-          <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 p-4">
-            <Input placeholder="Search number or customer" className="max-w-xs" defaultValue={q} onChange={(e) => set({ q: e.target.value })} />
+          <div className="flex flex-wrap items-center gap-3 border-b border-line p-4">
+            <Input placeholder="Search" aria-label="Search by number or customer" className="max-w-xs" defaultValue={q} onChange={(e) => set({ q: e.target.value })} />
             {customerId && (
               <Button variant="ghost" onClick={() => set({ customerId: '' })}>
                 Clear customer filter
@@ -83,7 +91,7 @@ export function SubscriptionsPage() {
             <>
               <Table headers={['Number', 'Customer', 'Plan', 'Status', 'Start', 'Next bill', 'Expires']}>
                 {list.data!.data.map((s) => (
-                  <tr key={s.id} className="cursor-pointer hover:bg-slate-50" onClick={() => navigate(`/subscriptions/${s.id}`)}>
+                  <tr key={s.id} className="cursor-pointer hover:bg-slate-100/60" onClick={() => navigate(`/subscriptions/${s.id}`)}>
                     <Td className="font-medium">
                       <Link to={`/subscriptions/${s.id}`} className="text-brand-700 hover:underline" onClick={(e) => e.stopPropagation()}>
                         {s.number}
@@ -97,7 +105,16 @@ export function SubscriptionsPage() {
                       <Badge status={s.status} />
                     </Td>
                     <Td>{date(s.startDate)}</Td>
-                    <Td>{s.status === 'ACTIVE' ? date(s.nextBillingDate) : '—'}</Td>
+                    <Td>
+                      {s.status === 'ACTIVE' && s.nextBillingDate ? (
+                        <span className="inline-flex items-center gap-2">
+                          <NextBillRing next={s.nextBillingDate} start={s.startDate} period={s.plan.billingPeriod} interval={s.plan.billingInterval} />
+                          {date(s.nextBillingDate)}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </Td>
                     <Td>{date(s.expiryDate)}</Td>
                   </tr>
                 ))}
