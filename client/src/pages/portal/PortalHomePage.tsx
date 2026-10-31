@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { clsx } from 'clsx'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Check } from 'lucide-react'
 import { api, type Paginated } from '../../api/client'
 import { periodLabel, type InvoiceListItem, type Outstanding, type PortalSubscription } from '../../api/types'
 import { Badge, buttonClass, Card, EmptyState, ErrorState, Spinner } from '../../components/ui'
@@ -36,6 +36,101 @@ function PeriodRing({ day, days }: { day: number; days: number }) {
         of {days} days
       </text>
     </svg>
+  )
+}
+
+/** The next invoice drawn as a paper receipt: the one rich moment on the page. Built from the real priced lines. */
+function NextInvoiceReceipt({ sub }: { sub: PortalSubscription }) {
+  const t = sub.totals
+  const torn = 'radial-gradient(circle at 8px 100%, transparent 6px, #000 6.5px) -8px 0 / 16px 100% repeat-x'
+  return (
+    <div className="relative mx-auto w-full max-w-[460px]">
+      <div
+        className="rounded-t-lg border border-b-0 border-line bg-surface px-7 pt-7 pb-9 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_32px_-12px_rgba(0,0,0,0.18)]"
+        style={{ WebkitMask: torn, mask: torn }}
+      >
+        <div className="flex items-baseline justify-between">
+          <span className="text-sm font-medium text-slate-900">Brightloop Software</span>
+          <span className="font-mono text-[11px] text-slate-500">{sub.number}</span>
+        </div>
+        <p className="mt-1 font-mono text-[11px] text-slate-500">
+          Issued {date(sub.nextBillingDate)} · due in {sub.paymentTermDays} days
+        </p>
+        <div className="my-5 border-t border-dashed border-line-strong" />
+        <ul className="space-y-2.5">
+          {t.lines.map((l) => (
+            <li key={l.key} className="flex items-baseline gap-3 text-[13px]">
+              <span className="min-w-0 flex-1 truncate text-slate-700">{l.description}</span>
+              <span className="font-mono text-[11px] text-slate-400 tabular-nums">×{l.quantity}</span>
+              <span className="w-24 text-right font-mono text-slate-900 tabular-nums">{money(l.base)}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="my-5 border-t border-dashed border-line-strong" />
+        <dl className="space-y-1.5 font-mono text-[12px] tabular-nums">
+          <div className="flex justify-between text-slate-500">
+            <dt>Subtotal</dt>
+            <dd>{money(t.subtotal)}</dd>
+          </div>
+          {t.discountTotal > 0 && (
+            <div className="flex justify-between text-emerald-700">
+              <dt>Discounts</dt>
+              <dd>−{money(t.discountTotal)}</dd>
+            </div>
+          )}
+          <div className="flex justify-between text-slate-500">
+            <dt>Tax</dt>
+            <dd>{money(t.taxTotal)}</dd>
+          </div>
+        </dl>
+        <div className="mt-4 flex items-baseline justify-between border-t border-line-strong pt-4">
+          <span className="text-sm text-slate-600">Total</span>
+          <span className="text-2xl font-medium tracking-[-0.015em] text-slate-900 tabular-nums">{money(t.total)}</span>
+        </div>
+        <p className="mt-4 font-mono text-[11px] text-slate-400">Covers the billing period starting {date(sub.nextBillingDate)}</p>
+      </div>
+    </div>
+  )
+}
+
+function PlanFacts({ sub }: { sub: PortalSubscription }) {
+  const can = [sub.plan.pausable && 'Pause', sub.plan.closable && 'Close early', sub.plan.renewable && 'Renew'].filter(Boolean) as string[]
+  const rows: [string, string][] = [
+    ['Plan', sub.plan.name],
+    ['Billing', periodLabel(sub.plan.billingPeriod, sub.plan.billingInterval)],
+    ['Started', date(sub.startDate)],
+    ['Renews', sub.expiryDate ? date(sub.expiryDate) : 'Open-ended'],
+    ['Payment terms', sub.paymentTermDays === 0 ? 'Due on issue' : `Net ${sub.paymentTermDays} days`],
+  ]
+  return (
+    <div className="flex h-full flex-col">
+      <dl className="divide-y divide-line">
+        {rows.map(([k, v]) => (
+          <div key={k} className="flex h-11 items-center justify-between text-sm">
+            <dt className="text-slate-500">{k}</dt>
+            <dd className="text-slate-900">{v}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-6 text-[13px] text-slate-500">This plan allows you to</p>
+      {can.length ? (
+        <ul className="mt-2 space-y-1.5">
+          {can.map((c) => (
+            <li key={c} className="flex items-center gap-2 text-sm text-slate-700">
+              <Check className="h-4 w-4 text-slate-400" strokeWidth={1.5} />
+              {c}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-2 text-sm text-slate-500">Contact us to change this plan</p>
+      )}
+      <div className="mt-6 border-t border-line pt-5">
+        <Link to={`/portal/subscriptions/${sub.id}`} className={clsx(buttonClass('secondary'), 'w-full justify-center')}>
+          Manage subscription
+        </Link>
+      </div>
+    </div>
   )
 }
 
@@ -111,6 +206,18 @@ export function PortalHomePage() {
           )}
         </section>
       </div>
+
+      {next && period && (
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+          <section className="rounded-xl border border-line bg-slate-100/50 px-6 py-8">
+            <p className="mb-5 text-center text-[13px] text-slate-500">{firstInvoice ? 'Your first invoice' : 'Your next invoice'}, as it will be issued</p>
+            <NextInvoiceReceipt sub={next} />
+          </section>
+          <Card title="Your plan">
+            <PlanFacts sub={next} />
+          </Card>
+        </div>
+      )}
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <Card
