@@ -16,6 +16,9 @@ import { ProductsPage } from './pages/catalog/ProductsPage'
 import { ProductFormPage } from './pages/catalog/ProductFormPage'
 import { PlansPage } from './pages/catalog/PlansPage'
 import { DiscountsPage } from './pages/catalog/DiscountsPage'
+import { InvoicesPage } from './pages/billing/InvoicesPage'
+import { InvoiceDetailPage } from './pages/billing/InvoiceDetailPage'
+import { BillingPage } from './pages/billing/BillingPage'
 import { CustomersPage } from './pages/sales/CustomersPage'
 import { TemplatesPage } from './pages/sales/TemplatesPage'
 import { TemplateFormPage } from './pages/sales/TemplateFormPage'
@@ -67,9 +70,10 @@ export default function App() {
         <Route path="/customers" element={<CustomersPage />} />
         <Route path="/templates" element={<TemplatesPage />} />
         <Route path="/templates/:id" element={<RequireAuth roles={['ADMIN']}><TemplateFormPage /></RequireAuth>} />
-        <Route path="/invoices" element={<Placeholder title="Invoices" />} />
+        <Route path="/invoices" element={<InvoicesPage />} />
+        <Route path="/invoices/:id" element={<InvoiceDetailPage />} />
         <Route path="/payments" element={<Placeholder title="Payments" />} />
-        <Route path="/billing" element={<Placeholder title="Billing runs" />} />
+        <Route path="/billing" element={<BillingPage />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/products/:id" element={<ProductFormPage />} />
         <Route path="/plans" element={<PlansPage />} />

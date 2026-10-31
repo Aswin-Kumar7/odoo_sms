@@ -45,7 +45,12 @@ const detailInclude = {
 type SubscriptionDetail = Prisma.SubscriptionGetPayload<{ include: typeof detailInclude }>;
 
 /** Turns a subscription into engine input: the plan's base fee (if any) plus each product line. */
-export function buildPricingLines(sub: Pick<SubscriptionDetail, "plan" | "lines">): PricingLine[] {
+export interface PricingSource {
+  plan: { name: string; price: number; tax: { rateBp: number } | null };
+  lines: { id: number; productId: number; description: string; quantity: number; unitPrice: number; tax: { rateBp: number } | null }[];
+}
+
+export function buildPricingLines(sub: PricingSource): PricingLine[] {
   const lines: PricingLine[] = [];
   if (sub.plan.price > 0) {
     lines.push({

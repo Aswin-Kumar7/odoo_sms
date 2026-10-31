@@ -237,3 +237,86 @@ export interface Subscription {
   editable: boolean
   timeline: ActivityEntry[]
 }
+
+export type InvoiceStatus = 'DRAFT' | 'CONFIRMED' | 'PAID' | 'CANCELLED'
+
+export interface InvoiceListItem {
+  id: number
+  number: string
+  status: InvoiceStatus
+  issueDate: string
+  dueDate: string
+  periodStart: string
+  periodEnd: string
+  total: number
+  amountPaid: number
+  sentAt: string | null
+  overdue: boolean
+  customer: { id: number; name: string }
+  subscription: { id: number; number: string }
+}
+
+export interface InvoiceLine {
+  id: number
+  productId: number | null
+  description: string
+  quantity: number
+  unitPrice: number
+  discountAmount: number
+  taxRateBp: number
+  taxAmount: number
+  lineTotal: number
+}
+
+export interface Payment {
+  id: number
+  method: 'CASH' | 'BANK_TRANSFER' | 'CARD' | 'UPI' | 'CHEQUE' | 'ONLINE_SIMULATED'
+  amount: number
+  paidOn: string
+  note: string | null
+  createdAt: string
+  recordedBy: { name: string } | null
+}
+
+export interface Invoice extends Omit<InvoiceListItem, 'customer' | 'subscription'> {
+  subtotal: number
+  discountTotal: number
+  taxTotal: number
+  outstanding: number
+  customer: { id: number; name: string; email: string; address: string | null; taxId: string | null; phone: string | null }
+  subscription: { id: number; number: string; plan: { name: string; billingPeriod: BillingPeriod; billingInterval: number } }
+  lines: InvoiceLine[]
+  discounts: { discountId: number; amount: number; discount: { id: number; code: string; name: string } }[]
+  payments: Payment[]
+  billingRun: { id: number; trigger: 'CRON' | 'MANUAL'; startedAt: string } | null
+  timeline: ActivityEntry[]
+}
+
+export interface BillingRun {
+  id: number
+  asOf: string
+  trigger: 'CRON' | 'MANUAL'
+  status: 'RUNNING' | 'COMPLETED' | 'FAILED'
+  createdCount: number
+  skippedCount: number
+  failedCount: number
+  activatedCount: number
+  closedCount: number
+  errors: { subscription: string; message: string }[]
+  startedAt: string
+  finishedAt: string | null
+  triggeredBy: { name: string } | null
+}
+
+export interface RunSummary {
+  id: number
+  asOf: string
+  status: string
+  activatedCount: number
+  createdCount: number
+  skippedCount: number
+  failedCount: number
+  closedCount: number
+  errors: { subscription: string; message: string }[]
+  durationMs: number
+}

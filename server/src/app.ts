@@ -17,6 +17,8 @@ import { templatesRouter } from "./modules/templates/templates.routes.js";
 import { subscriptionsRouter } from "./modules/subscriptions/subscriptions.routes.js";
 import { discountsRouter } from "./modules/discounts/discounts.routes.js";
 import { pricingRouter } from "./modules/pricing/pricing.routes.js";
+import { invoicesRouter } from "./modules/invoices/invoices.routes.js";
+import { billingRouter } from "./modules/billing/billing.routes.js";
 
 export function createApp() {
   const app = express();
@@ -49,6 +51,8 @@ export function createApp() {
   api.use("/subscriptions", subscriptionsRouter);
   api.use("/discounts", discountsRouter);
   api.use("/pricing", pricingRouter);
+  api.use("/invoices", invoicesRouter);
+  api.use("/billing", billingRouter);
   app.use("/api/v1", api);
 
   app.use(notFoundHandler);

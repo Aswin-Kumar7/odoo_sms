@@ -12,8 +12,9 @@ import { useActivePlans, useActiveProducts, useActiveTaxes } from '../../api/loo
 import { Badge, Button, Card, ErrorState, Field, Input, Modal, PageHeader, Select, Spinner, Table, Td, Textarea } from '../../components/ui'
 import { StatusStepper, Timeline, TotalsTable } from '../../components/subscription'
 import { applyServerError } from '../../lib/forms'
-import { date, money, toMajor, toMinor } from '../../lib/format'
+import { date, money, todayIso, toMajor, toMinor } from '../../lib/format'
 import { discountConditions, discountValue } from '../../lib/discounts'
+import { InvoiceStatusBadge, lastDay } from '../../components/invoice'
 
 const NEEDS_REASON: SubscriptionAction[] = ['close', 'cancel']
 const DANGER: SubscriptionAction[] = ['close', 'cancel']
@@ -109,10 +110,10 @@ export function SubscriptionDetailPage() {
                         </Link>
                       </Td>
                       <Td>
-                        {date(inv.periodStart)} – {date(inv.periodEnd)}
+                        {date(inv.periodStart)} – {date(lastDay(inv.periodEnd))}
                       </Td>
                       <Td>
-                        <Badge status={inv.status} />
+                        <InvoiceStatusBadge status={inv.status} overdue={inv.status === 'CONFIRMED' && inv.dueDate.slice(0, 10) < todayIso()} />
                       </Td>
                       <Td>{date(inv.dueDate)}</Td>
                       <Td>{money(inv.total)}</Td>

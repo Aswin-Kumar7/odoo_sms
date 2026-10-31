@@ -47,6 +47,7 @@ const ACTION_TEXT: Record<string, string> = {
   auto_close: 'Closed automatically at expiry',
   discount_attached: 'Discount attached',
   discount_removed: 'Discount removed',
+  send: 'Sent to customer',
 }
 
 function describeMeta(e: ActivityEntry): string | null {
@@ -57,6 +58,10 @@ function describeMeta(e: ActivityEntry): string | null {
   if (e.action === 'resume' && m.nextBillingDate) return `Next bill ${m.nextBillingDate}`
   if (e.action === 'lines_updated' && m.lineCount !== undefined) return `${m.lineCount} line(s)`
   if (e.action === 'updated' && Array.isArray(m.fields)) return `Changed: ${(m.fields as string[]).join(', ')}`
+  if (e.action === 'send' && m.to) return `To ${m.to}`
+  if (e.action === 'created' && m.billingRunId) return `Billing run #${m.billingRunId}`
+  if (e.action === 'cancel' && m.rebill) return 'Period will be billed again on the next run'
+  if (m.bulk) return 'Bulk confirmation'
   if (m.code) return String(m.code)
   return null
 }
