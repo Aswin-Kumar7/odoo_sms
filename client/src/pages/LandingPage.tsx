@@ -238,10 +238,10 @@ export function LandingPage() {
           <p className="font-mono text-xs text-slate-500">How billing works</p>
           <h2 className="mt-4 text-[32px] leading-[1.1] font-medium tracking-[-0.025em] text-slate-900 sm:text-[40px]">From quote to paid, then again next period without anyone remembering</h2>
         </div>
-        <ol className="relative mt-16 grid grid-cols-1 gap-12 md:grid-cols-2 xl:grid-cols-4 xl:gap-8">
+        <ol className="relative mt-16 grid grid-cols-1 gap-12 stagger-children md:grid-cols-2 xl:grid-cols-4 xl:gap-8">
           <div className="absolute top-3 right-0 left-0 hidden h-px bg-cream-line xl:block" aria-hidden="true" />
           {CYCLE.map((c, i) => (
-            <li key={c.step} className="relative flex flex-col">
+            <li key={c.step} className="animate-fade-up relative flex flex-col">
               <span className="relative flex h-6 w-6 items-center justify-center rounded-full border border-line-strong bg-cream font-mono text-[11px] text-slate-600">
                 {i === CYCLE.length - 1 ? <span className="h-2 w-2 rounded-full bg-brand-600" /> : i + 1}
               </span>
@@ -263,7 +263,7 @@ export function LandingPage() {
             <div className="mt-10">
               <NextInvoicePreview />
             </div>
-            <Link to="/login" className="mt-8 inline-flex items-center gap-1.5 self-start text-sm font-medium text-brand-600 hover:underline">
+            <Link to="/login" className="link-draw mt-8 inline-flex items-center gap-1.5 self-start text-sm font-medium text-brand-600 hover:underline">
               Sign in to the portal <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -274,7 +274,7 @@ export function LandingPage() {
             <div className="mt-10">
               <OverduePreview />
             </div>
-            <Link to="/login/team" className="mt-8 inline-flex items-center gap-1.5 self-start text-sm font-medium text-brand-600 hover:underline">
+            <Link to="/login/team" className="link-draw mt-8 inline-flex items-center gap-1.5 self-start text-sm font-medium text-brand-600 hover:underline">
               Team sign in <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -287,9 +287,9 @@ export function LandingPage() {
           <p className="font-mono text-xs text-slate-500">Built for money</p>
           <h2 className="mt-4 text-[32px] leading-[1.1] font-medium tracking-[-0.025em] text-slate-900 sm:text-[40px]">The numbers on an invoice are numbers you can trust</h2>
         </div>
-        <div className="mt-14 grid grid-cols-1 gap-x-8 gap-y-10 border-t border-cream-line pt-10 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-14 grid grid-cols-1 gap-x-8 gap-y-10 border-t border-cream-line pt-10 stagger-children sm:grid-cols-2 xl:grid-cols-4">
           {GUARANTEES.map((g) => (
-            <div key={g.title}>
+            <div key={g.title} className="animate-fade-up card-hover rounded-lg p-3">
               <h3 className="text-base font-medium text-slate-900">{g.title}</h3>
               <p className="mt-2 text-[15px] leading-relaxed text-slate-600">{g.text}</p>
             </div>

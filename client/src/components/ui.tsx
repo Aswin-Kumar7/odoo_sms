@@ -75,7 +75,7 @@ Textarea.displayName = 'Textarea'
 
 export function Card({ title, actions, children, className }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={clsx('rounded-xl border border-line bg-surface shadow-card', className)}>
+    <section className={clsx('card-hover rounded-xl border border-line bg-surface shadow-card', className)}>
       {(title || actions) && (
         <header className="flex min-h-12 items-center justify-between gap-3 border-b border-line px-5 py-3">
           <h2 className="text-sm font-medium text-slate-900">{title}</h2>
@@ -90,9 +90,9 @@ export function Card({ title, actions, children, className }: { title?: ReactNod
 /** A figure with its label: the building block of every summary row. */
 export function Stat({ label, value, hint, tone, className }: { label: ReactNode; value: ReactNode; hint?: ReactNode; tone?: 'danger' | 'accent'; className?: string }) {
   return (
-    <div className={clsx('rounded-xl border border-line bg-surface p-5 shadow-card', className)}>
+    <div className={clsx('card-hover animate-fade-up rounded-xl border border-line bg-surface p-5 shadow-card', className)}>
       <p className="text-[13px] text-slate-500">{label}</p>
-      <p className={clsx('mt-2 text-[26px] leading-none font-medium tracking-[-0.01em]', tone === 'danger' ? 'text-red-600' : tone === 'accent' ? 'text-brand-600' : 'text-slate-900')}>{value}</p>
+      <p className={clsx('stat-shimmer mt-2 text-[26px] leading-none font-medium tracking-[-0.01em]', tone === 'danger' ? 'text-red-600' : tone === 'accent' ? 'text-brand-600' : 'text-slate-900')}>{value}</p>
       {hint && <p className="mt-2 font-mono text-xs text-slate-500">{hint}</p>}
     </div>
   )
@@ -135,7 +135,7 @@ export function Badge({ status, label }: { status: string; label?: string }) {
     <span
       className={clsx(
         'inline-flex h-6 items-center gap-1.5 rounded-md border px-2 text-xs font-medium whitespace-nowrap',
-        alert ? 'border-red-200 bg-red-50 text-red-700' : 'border-line bg-surface text-slate-700',
+        alert ? 'badge-alert border-red-200 bg-red-50 text-red-700' : 'border-line bg-surface text-slate-700',
       )}
     >
       <span className={clsx('h-1.5 w-1.5 rounded-full', statusDots[status] ?? 'bg-slate-400')} />
@@ -240,7 +240,7 @@ export function Table({ headers, children }: { headers: ReactNode[]; children: R
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-line [&>tr]:transition-colors [&>tr]:duration-150">{children}</tbody>
+        <tbody className="divide-y divide-line [&>tr]:table-row-hover [&>tr]:transition-colors [&>tr]:duration-150">{children}</tbody>
       </table>
     </div>
   )

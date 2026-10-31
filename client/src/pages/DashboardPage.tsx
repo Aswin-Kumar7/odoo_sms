@@ -81,7 +81,7 @@ function BarRow({ label, value, share, accent, to }: { label: string; value: str
         <span className="font-mono text-[13px] text-slate-900">{value}</span>
       </div>
       <div className="mt-2 h-1 rounded-full bg-slate-100">
-        <div className={clsx('h-1 rounded-full', accent ? 'bg-brand-600' : 'bg-slate-400')} style={{ width: `${Math.max(share * 100, share > 0 ? 1.5 : 0)}%` }} />
+        <div className={clsx('animate-bar h-1 rounded-full', accent ? 'bg-brand-600' : 'bg-slate-400')} style={{ width: `${Math.max(share * 100, share > 0 ? 1.5 : 0)}%` }} />
       </div>
     </>
   )
@@ -179,14 +179,14 @@ export function DashboardPage() {
             </>
           )}
           <div className="w-[170px]">
-          <Select aria-label="Plan" className="h-8 text-[13px]" value={planId} onChange={(e) => set({ planId: e.target.value })}>
-            <option value="">All plans</option>
-            {plans.data?.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </Select>
+            <Select aria-label="Plan" className="h-8 text-[13px]" value={planId} onChange={(e) => set({ planId: e.target.value })}>
+              <option value="">All plans</option>
+              {plans.data?.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </Select>
           </div>
         </div>
       </div>
@@ -212,7 +212,7 @@ export function DashboardPage() {
               </Link>
             )}
 
-            <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mb-4 grid grid-cols-1 gap-4 stagger-children sm:grid-cols-2 xl:grid-cols-4">
               <Stat label="Monthly recurring revenue" value={money(s.mrr)} tone="accent" hint={`ARR ${money(s.arr)}`} />
               <Stat
                 label="Active subscriptions"
@@ -307,7 +307,7 @@ export function DashboardPage() {
               <Card
                 title="Oldest overdue invoices"
                 actions={
-                  <Link to="/invoices?status=OVERDUE" className="inline-flex items-center gap-1 text-[13px] text-slate-500 hover:text-slate-900">
+                  <Link to="/invoices?status=OVERDUE" className="link-draw inline-flex items-center gap-1 text-[13px] text-slate-500 hover:text-slate-900">
                     All overdue <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 }
