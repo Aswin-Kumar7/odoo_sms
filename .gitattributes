@@ -1,0 +1,5 @@
+# Keep LF everywhere so migration checksums and diffs are identical on every OS.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
