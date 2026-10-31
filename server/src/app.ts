@@ -12,6 +12,9 @@ import { usersRouter } from "./modules/users/users.routes.js";
 import { taxesRouter } from "./modules/catalog/taxes.routes.js";
 import { productsRouter } from "./modules/catalog/products.routes.js";
 import { plansRouter } from "./modules/catalog/plans.routes.js";
+import { customersRouter } from "./modules/customers/customers.routes.js";
+import { templatesRouter } from "./modules/templates/templates.routes.js";
+import { subscriptionsRouter } from "./modules/subscriptions/subscriptions.routes.js";
 
 export function createApp() {
   const app = express();
@@ -39,6 +42,9 @@ export function createApp() {
   api.use("/taxes", taxesRouter);
   api.use("/products", productsRouter);
   api.use("/plans", plansRouter);
+  api.use("/customers", customersRouter);
+  api.use("/templates", templatesRouter);
+  api.use("/subscriptions", subscriptionsRouter);
   app.use("/api/v1", api);
 
   app.use(notFoundHandler);

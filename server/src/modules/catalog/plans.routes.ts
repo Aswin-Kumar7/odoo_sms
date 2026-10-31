@@ -3,7 +3,7 @@ import { z } from "zod";
 import { BillingPeriod, Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { ah, IdParam } from "../../lib/http.js";
-import { notFound } from "../../lib/errors.js";
+import { businessRule, notFound } from "../../lib/errors.js";
 import { DateOnly } from "../../lib/dates.js";
 import { requireRole } from "../../middleware/auth.js";
 
@@ -15,6 +15,7 @@ plansRouter.use(requireRole("ADMIN", "STAFF"));
 const PlanFields = z.object({
   name: z.string().trim().min(1).max(100),
   price: z.number().int().min(0).max(1_000_000_000),
+  taxId: z.number().int().positive().nullish(),
   billingPeriod: z.nativeEnum(BillingPeriod),
   billingInterval: z.number().int().min(1).max(36).default(1),
   minQuantity: z.number().int().min(1).max(100_000).default(1),
@@ -39,6 +40,12 @@ const autoCloseMessage = { message: "Auto-close needs a term length to know when
 const CreatePlan = PlanFields.refine(windowValid, windowMessage).refine(autoCloseValid, autoCloseMessage);
 const UpdatePlan = PlanFields.partial().refine(windowValid, windowMessage);
 
+async function assertTaxUsable(taxId: number | null | undefined) {
+  if (taxId == null) return;
+  const tax = await prisma.tax.findUnique({ where: { id: taxId }, select: { isActive: true } });
+  if (!tax || !tax.isActive) throw businessRule("Selected tax does not exist or is inactive");
+}
+
 const ListQuery = z.object({
   includeInactive: z.enum(["true", "false"]).default("false"),
   availableOn: DateOnly.optional(), // only plans that can be sold on this date
@@ -60,9 +67,10 @@ plansRouter.get(
         : {}),
     };
     const data = await prisma.recurringPlan.findMany({
+      relationLoadStrategy: "join",
       where,
       orderBy: [{ isActive: "desc" }, { name: "asc" }],
-      include: { _count: { select: { subscriptions: true } } },
+      include: { tax: { select: { id: true, name: true, rateBp: true } }, _count: { select: { subscriptions: true } } },
     });
     res.json({ data });
   }),
@@ -81,7 +89,9 @@ plansRouter.post(
   "/",
   requireRole("ADMIN"),
   ah(async (req, res) => {
-    res.status(201).json(await prisma.recurringPlan.create({ data: CreatePlan.parse(req.body) }));
+    const data = CreatePlan.parse(req.body);
+    await assertTaxUsable(data.taxId);
+    res.status(201).json(await prisma.recurringPlan.create({ data }));
   }),
 );
 
@@ -93,6 +103,7 @@ plansRouter.patch(
     const data = UpdatePlan.parse(req.body);
     const existing = await prisma.recurringPlan.findUnique({ where: { id } });
     if (!existing) throw notFound("Plan");
+    await assertTaxUsable(data.taxId);
     // A partial update must still leave a valid window once merged with stored values.
     const from = data.availableFrom !== undefined ? data.availableFrom : existing.availableFrom;
     const to = data.availableTo !== undefined ? data.availableTo : existing.availableTo;

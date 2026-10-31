@@ -30,13 +30,14 @@ async function main() {
   const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? "admin@brightloop.test").toLowerCase();
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "Admin@12345";
 
-  await upsertUser(adminEmail, adminPassword, "Asha Admin", "ADMIN");
-  await upsertUser("staff@brightloop.test", "Staff@12345", "Sam Staff", "STAFF");
+  const admin = await upsertUser(adminEmail, adminPassword, "Asha Admin", "ADMIN");
+  const staff = await upsertUser("staff@brightloop.test", "Staff@12345", "Sam Staff", "STAFF");
   await upsertUser("customer@brightloop.test", "Customer@123", "Chris Customer", "CUSTOMER", "Corner Shop Pvt Ltd");
 
   console.log("Seeded users: admin, staff, customer");
 
   await seedCatalogue();
+  await seedSales(admin.id, staff.id);
 }
 
 // ───────────── Catalogue (prices in paise) ─────────────
@@ -80,6 +81,7 @@ async function upsertProduct(p: SeedProduct) {
 interface SeedPlan {
   name: string;
   price: number;
+  taxId?: number | null;
   billingPeriod: BillingPeriod;
   billingInterval?: number;
   minQuantity?: number;
@@ -94,6 +96,7 @@ interface SeedPlan {
 
 async function upsertPlan(p: SeedPlan) {
   const data = {
+    taxId: null,
     billingInterval: 1,
     minQuantity: 1,
     termLength: null,
@@ -151,9 +154,9 @@ async function seedCatalogue() {
     { name: "Monthly", price: 0, billingPeriod: "MONTHLY", pausable: true },
     { name: "Quarterly", price: 0, billingPeriod: "MONTHLY", billingInterval: 3, pausable: true },
     { name: "Yearly", price: 0, billingPeriod: "YEARLY", termLength: 1 },
-    { name: "Annual contract (fixed)", price: 1000000, billingPeriod: "YEARLY", termLength: 1, autoClose: true, closable: false, renewable: false, minQuantity: 10 },
+    { name: "Annual contract (fixed)", price: 1000000, taxId: gst18.id, billingPeriod: "YEARLY", termLength: 1, autoClose: true, closable: false, renewable: false, minQuantity: 10 },
     { name: "Weekly trial", price: 0, billingPeriod: "WEEKLY", termLength: 2, autoClose: true, renewable: false },
-    { name: "Daily pay-as-you-go", price: 5000, billingPeriod: "DAILY" },
+    { name: "Daily pay-as-you-go", price: 5000, taxId: gst18.id, billingPeriod: "DAILY" },
   ];
   for (const p of plans) await upsertPlan(p);
 
@@ -166,3 +169,111 @@ main()
     process.exit(1);
   })
   .finally(() => prisma.$disconnect());
+
+// ───────────── Customers, templates and subscriptions ─────────────
+// Subscriptions are created through the real service functions, so numbering, pricing,
+// state transitions and the audit trail are exactly what the app produces.
+
+async function seedSales(adminId: number, staffId: number) {
+  const { createSubscription, transition } = await import("../src/modules/subscriptions/subscriptions.service.js");
+
+  const product = async (name: string) => prisma.product.findFirstOrThrow({ where: { name }, include: { variants: { where: { isActive: true } } } });
+  const plan = async (name: string) => prisma.recurringPlan.findFirstOrThrow({ where: { name } });
+  const [crm, desk, analytics, storage, support, onboarding] = await Promise.all(
+    ["Brightloop CRM", "Brightloop Desk", "Analytics add-on", "Extra storage 100 GB", "Support Plus", "Onboarding & training"].map(product),
+  );
+  const variant = (p: Awaited<ReturnType<typeof product>>, name: string) => p.variants.find((v) => v.name === name)!.id;
+  const [monthly, quarterly, yearly, annual] = await Promise.all(["Monthly", "Quarterly", "Yearly", "Annual contract (fixed)"].map(plan));
+
+  // Templates (upserted by name; lines replaced)
+  const templates = [
+    {
+      name: "SMB Starter",
+      planId: monthly.id,
+      validityDays: 14,
+      notes: "Three CRM seats with priority support.",
+      lines: [
+        { productId: crm.id, variantId: variant(crm, "Brand: Odoo"), quantity: 3 },
+        { productId: support.id, variantId: null, quantity: 1 },
+      ],
+    },
+    {
+      name: "Enterprise annual",
+      planId: annual.id,
+      validityDays: 30,
+      notes: "Fixed annual contract for 10+ seats with onboarding.",
+      lines: [
+        { productId: crm.id, variantId: variant(crm, "Brand: Odoo"), quantity: 10 },
+        { productId: desk.id, variantId: variant(desk, "Edition: Enterprise"), quantity: 10 },
+        { productId: onboarding.id, variantId: null, quantity: 10 },
+      ],
+    },
+    {
+      name: "Helpdesk quarterly",
+      planId: quarterly.id,
+      validityDays: 21,
+      notes: "Helpdesk seats billed every three months.",
+      lines: [
+        { productId: desk.id, variantId: variant(desk, "Edition: Standard"), quantity: 5 },
+        { productId: analytics.id, variantId: null, quantity: 1 },
+      ],
+    },
+  ];
+  const templateIds: Record<string, number> = {};
+  for (const t of templates) {
+    const { lines, ...fields } = t;
+    const existing = await prisma.quotationTemplate.findFirst({ where: { name: t.name } });
+    const saved = existing
+      ? await prisma.$transaction(async (tx) => {
+          await tx.quotationTemplateLine.deleteMany({ where: { templateId: existing.id } });
+          return tx.quotationTemplate.update({ where: { id: existing.id }, data: { ...fields, isActive: true, lines: { create: lines } } });
+        })
+      : await prisma.quotationTemplate.create({ data: { ...fields, lines: { create: lines } } });
+    templateIds[t.name] = saved.id;
+  }
+
+  // Customers (found by email)
+  const customerData = [
+    { name: "Corner Shop Pvt Ltd", email: "customer@brightloop.test", phone: "+91 98450 11111", taxId: "29ABCDE1234F1Z5" },
+    { name: "Nimbus Logistics", email: "billing@nimbus.test", phone: "+91 80 4000 1234", taxId: "29NIMBS4321K1Z2" },
+    { name: "Saffron Foods", email: "accounts@saffron.test", phone: "+91 22 6600 7788", taxId: "27SAFFR9876L1Z9" },
+    { name: "Orbit Media Studio", email: "finance@orbitmedia.test", phone: "+91 44 2811 9090", taxId: null },
+    { name: "Kaveri Health Clinics", email: "admin@kaverihealth.test", phone: "+91 80 2222 3333", taxId: "29KAVER5555M1Z1" },
+  ];
+  const customers: Record<string, number> = {};
+  for (const c of customerData) {
+    const existing = await prisma.customer.findFirst({ where: { email: c.email } });
+    customers[c.name] = existing ? (await prisma.customer.update({ where: { id: existing.id }, data: c })).id : (await prisma.customer.create({ data: c })).id;
+  }
+
+  // Subscriptions: only for demo customers that have none yet, so re-running doesn't duplicate.
+  const start = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()));
+  type Step = "send_quote" | "confirm" | "activate" | "pause";
+  const scenarios: { customer: string; template?: string; planId?: number; lines?: { productId: number; variantId?: number | null; quantity: number }[]; steps: Step[] }[] = [
+    { customer: "Corner Shop Pvt Ltd", template: "SMB Starter", steps: ["send_quote", "confirm", "activate"] },
+    { customer: "Nimbus Logistics", template: "Enterprise annual", steps: ["send_quote", "confirm", "activate"] },
+    { customer: "Saffron Foods", template: "Helpdesk quarterly", steps: ["send_quote", "confirm", "activate", "pause"] },
+    { customer: "Orbit Media Studio", template: "SMB Starter", steps: ["send_quote"] },
+    {
+      customer: "Kaveri Health Clinics",
+      planId: yearly.id,
+      lines: [
+        { productId: crm.id, variantId: variant(crm, "Brand: Generic"), quantity: 4 },
+        { productId: storage.id, quantity: 3 },
+      ],
+      steps: [],
+    },
+  ];
+  let created = 0;
+  for (const s of scenarios) {
+    const customerId = customers[s.customer];
+    if (await prisma.subscription.count({ where: { customerId } })) continue;
+    let sub = await createSubscription(
+      { customerId, templateId: s.template ? templateIds[s.template] : undefined, planId: s.planId, startDate: start, lines: s.lines },
+      staffId,
+    );
+    for (const step of s.steps) sub = await transition(sub.id, step, { userId: step === "activate" ? adminId : staffId });
+    created++;
+  }
+  console.log(`Seeded sales: ${templates.length} templates, ${customerData.length} customers, ${created} new subscriptions`);
+}

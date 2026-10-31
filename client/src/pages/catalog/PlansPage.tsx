@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
 import { api } from '../../api/client'
-import { periodLabel, type BillingPeriod, type Plan } from '../../api/types'
+import { periodLabel, type BillingPeriod, type Plan, type Tax } from '../../api/types'
 import { useIsAdmin } from '../../auth/AuthContext'
 import { Badge, Button, Card, EmptyState, ErrorState, Field, Input, Modal, PageHeader, Select, Spinner, Table, Td } from '../../components/ui'
 import { applyServerError } from '../../lib/forms'
@@ -107,6 +107,7 @@ const schema = z
   .object({
     name: z.string().trim().min(1, 'Enter a name'),
     price: z.coerce.number({ invalid_type_error: 'Enter an amount' }).min(0, 'Cannot be negative'),
+    taxId: z.string(),
     billingPeriod: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
     billingInterval: z.coerce.number().int().min(1, 'At least 1'),
     minQuantity: z.coerce.number().int().min(1, 'At least 1'),
@@ -129,10 +130,13 @@ const dateInput = (iso: string | null) => (iso ? iso.slice(0, 10) : '')
 
 function PlanModal({ plan, onClose }: { plan: Plan | null; onClose: () => void }) {
   const qc = useQueryClient()
+  const taxes = useQuery({ queryKey: ['taxes', 'active'], queryFn: () => api.get<{ data: Tax[] }>('/taxes').then((r) => r.data) })
   const {
     register,
     handleSubmit,
     setError,
+    setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<Form>({
     resolver: zodResolver(schema),
@@ -140,17 +144,24 @@ function PlanModal({ plan, onClose }: { plan: Plan | null; onClose: () => void }
       ? {
           ...plan,
           price: toMajor(plan.price),
+          taxId: plan.taxId ? String(plan.taxId) : '',
           availableFrom: dateInput(plan.availableFrom),
           availableTo: dateInput(plan.availableTo),
           termLength: plan.termLength ? String(plan.termLength) : '',
         }
-      : { name: '', price: 0, billingPeriod: 'MONTHLY', billingInterval: 1, minQuantity: 1, availableFrom: '', availableTo: '', termLength: '', autoClose: false, closable: true, pausable: false, renewable: true },
+      : { name: '', price: 0, taxId: '', billingPeriod: 'MONTHLY', billingInterval: 1, minQuantity: 1, availableFrom: '', availableTo: '', termLength: '', autoClose: false, closable: true, pausable: false, renewable: true },
   })
+
+  // Re-apply the selected tax once its <option> exists.
+  useEffect(() => {
+    if (taxes.data) setValue('taxId', getValues('taxId'))
+  }, [taxes.data, setValue, getValues])
 
   const onSubmit = handleSubmit(async (f) => {
     const body = {
       ...f,
       price: toMinor(f.price),
+      taxId: f.taxId ? Number(f.taxId) : null,
       billingPeriod: f.billingPeriod as BillingPeriod,
       availableFrom: f.availableFrom || null,
       availableTo: f.availableTo || null,
@@ -201,6 +212,16 @@ function PlanModal({ plan, onClose }: { plan: Plan | null; onClose: () => void }
           </Field>
           <Field label="Base fee per period (₹)" error={errors.price?.message} hint="0 if only product lines are charged">
             <Input type="number" step="0.01" min="0" {...register('price')} />
+          </Field>
+          <Field label="Tax on base fee" error={errors.taxId?.message}>
+            <Select {...register('taxId')}>
+              <option value="">No tax</option>
+              {taxes.data?.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </Select>
           </Field>
           <Field label="Minimum quantity" error={errors.minQuantity?.message}>
             <Input type="number" min="1" {...register('minQuantity')} />

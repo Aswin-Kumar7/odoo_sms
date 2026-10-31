@@ -36,6 +36,7 @@ export async function listProducts(opts: { page: number; pageSize: number; q?: s
   const [total, data] = await Promise.all([
     prisma.product.count({ where }),
     prisma.product.findMany({
+      relationLoadStrategy: "join",
       where,
       orderBy: { name: "asc" },
       include: {
@@ -49,7 +50,7 @@ export async function listProducts(opts: { page: number; pageSize: number; q?: s
 }
 
 export async function getProduct(id: number) {
-  const product = await prisma.product.findUnique({ where: { id }, include: detailInclude });
+  const product = await prisma.product.findUnique({ relationLoadStrategy: "join", where: { id }, include: detailInclude });
   if (!product) throw notFound("Product");
   return product;
 }
@@ -105,6 +106,6 @@ export async function updateProduct(id: number, input: Partial<ProductInput>) {
         else await tx.productVariant.create({ data: { ...v, productId: id } });
       }
     }
-    return tx.product.findUniqueOrThrow({ where: { id }, include: detailInclude });
+    return tx.product.findUniqueOrThrow({ relationLoadStrategy: "join", where: { id }, include: detailInclude });
   });
 }

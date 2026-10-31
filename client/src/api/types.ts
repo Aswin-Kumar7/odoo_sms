@@ -44,6 +44,7 @@ export interface Plan {
   id: number
   name: string
   price: number
+  taxId: number | null
   billingPeriod: BillingPeriod
   billingInterval: number
   minQuantity: number
@@ -68,4 +69,139 @@ const PERIOD_UNIT: Record<BillingPeriod, [string, string]> = {
 export function periodLabel(period: BillingPeriod, interval = 1) {
   const [one, many] = PERIOD_UNIT[period]
   return interval === 1 ? `Every ${one}` : `Every ${interval} ${many}`
+}
+
+export interface Customer {
+  id: number
+  name: string
+  email: string
+  phone: string | null
+  address: string | null
+  taxId: string | null
+  createdAt: string
+  hasPortalAccess?: boolean
+  _count?: { subscriptions: number; invoices?: number }
+}
+
+export interface TemplateLine {
+  id: number
+  productId: number
+  variantId: number | null
+  quantity: number
+  product: { id: number; name: string; salesPrice: number }
+  variant: { id: number; name: string; priceExtra: number } | null
+}
+
+export interface QuotationTemplate {
+  id: number
+  name: string
+  planId: number
+  validityDays: number
+  notes: string | null
+  isActive: boolean
+  plan: Pick<Plan, 'id' | 'name' | 'billingPeriod' | 'billingInterval' | 'minQuantity' | 'price'>
+  lines: TemplateLine[]
+  _count?: { subscriptions: number }
+}
+
+export type SubscriptionStatus = 'DRAFT' | 'QUOTATION' | 'CONFIRMED' | 'ACTIVE' | 'PAUSED' | 'CLOSED'
+export const SUBSCRIPTION_FLOW: SubscriptionStatus[] = ['DRAFT', 'QUOTATION', 'CONFIRMED', 'ACTIVE', 'CLOSED']
+
+export interface SubscriptionListItem {
+  id: number
+  number: string
+  status: SubscriptionStatus
+  startDate: string
+  expiryDate: string | null
+  nextBillingDate: string | null
+  quoteExpiresAt: string | null
+  customer: { id: number; name: string }
+  plan: Pick<Plan, 'id' | 'name' | 'billingPeriod' | 'billingInterval'>
+  _count: { lines: number }
+}
+
+export interface SubscriptionLine {
+  id: number
+  productId: number
+  variantId: number | null
+  description: string
+  quantity: number
+  unitPrice: number
+  taxId: number | null
+  product: { id: number; name: string }
+  variant: { id: number; name: string } | null
+  tax: Pick<Tax, 'id' | 'name' | 'rateBp'> | null
+}
+
+export interface PricedLine {
+  key: string
+  productId: number | null
+  description: string
+  quantity: number
+  unitPrice: number
+  taxRateBp: number
+  base: number
+  discountAmount: number
+  taxAmount: number
+  lineTotal: number
+}
+
+export interface Totals {
+  lines: PricedLine[]
+  subtotal: number
+  discountTotal: number
+  taxTotal: number
+  total: number
+}
+
+export type SubscriptionAction = 'send_quote' | 'confirm' | 'activate' | 'pause' | 'resume' | 'close' | 'cancel' | 'renew'
+
+export interface ActivityEntry {
+  id: number
+  action: string
+  fromStatus: string | null
+  toStatus: string | null
+  meta: Record<string, unknown> | null
+  createdAt: string
+  user: { name: string; role: string } | null
+}
+
+export interface InvoiceSummary {
+  id: number
+  number: string
+  status: string
+  periodStart: string
+  periodEnd: string
+  dueDate: string
+  total: number
+  amountPaid: number
+}
+
+export interface Subscription {
+  id: number
+  number: string
+  status: SubscriptionStatus
+  customerId: number
+  planId: number
+  quoteExpiresAt: string | null
+  startDate: string
+  expiryDate: string | null
+  nextBillingDate: string | null
+  paymentTermDays: number
+  notes: string | null
+  pausedAt: string | null
+  closedAt: string | null
+  closeReason: string | null
+  version: number
+  createdAt: string
+  customer: { id: number; name: string; email: string }
+  plan: Plan & { tax: Pick<Tax, 'id' | 'name' | 'rateBp'> | null }
+  template: { id: number; name: string; validityDays: number } | null
+  createdBy: { id: number; name: string } | null
+  lines: SubscriptionLine[]
+  invoices: InvoiceSummary[]
+  totals: Totals
+  actions: { action: SubscriptionAction; label: string; blockedReason: string | null }[]
+  editable: boolean
+  timeline: ActivityEntry[]
 }

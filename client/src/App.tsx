@@ -15,6 +15,12 @@ import { TaxesPage } from './pages/catalog/TaxesPage'
 import { ProductsPage } from './pages/catalog/ProductsPage'
 import { ProductFormPage } from './pages/catalog/ProductFormPage'
 import { PlansPage } from './pages/catalog/PlansPage'
+import { CustomersPage } from './pages/sales/CustomersPage'
+import { TemplatesPage } from './pages/sales/TemplatesPage'
+import { TemplateFormPage } from './pages/sales/TemplateFormPage'
+import { SubscriptionsPage } from './pages/sales/SubscriptionsPage'
+import { NewSubscriptionPage } from './pages/sales/NewSubscriptionPage'
+import { SubscriptionDetailPage } from './pages/sales/SubscriptionDetailPage'
 
 function BackOffice() {
   const { user, logout } = useAuth()
@@ -54,9 +60,12 @@ export default function App() {
 
       <Route element={<BackOffice />}>
         <Route path="/dashboard" element={<Placeholder title="Dashboard" />} />
-        <Route path="/subscriptions" element={<Placeholder title="Subscriptions" />} />
-        <Route path="/customers" element={<Placeholder title="Customers" />} />
-        <Route path="/templates" element={<Placeholder title="Quotation templates" />} />
+        <Route path="/subscriptions" element={<SubscriptionsPage />} />
+        <Route path="/subscriptions/new" element={<NewSubscriptionPage />} />
+        <Route path="/subscriptions/:id" element={<SubscriptionDetailPage />} />
+        <Route path="/customers" element={<CustomersPage />} />
+        <Route path="/templates" element={<TemplatesPage />} />
+        <Route path="/templates/:id" element={<RequireAuth roles={['ADMIN']}><TemplateFormPage /></RequireAuth>} />
         <Route path="/invoices" element={<Placeholder title="Invoices" />} />
         <Route path="/payments" element={<Placeholder title="Payments" />} />
         <Route path="/billing" element={<Placeholder title="Billing runs" />} />

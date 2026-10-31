@@ -74,9 +74,10 @@ export function ProductFormPage() {
   } = useForm<Form>({ resolver: zodResolver(schema), defaultValues: empty })
   const variants = useFieldArray({ control, name: 'variants' })
 
+  // Reset once both the product and the tax options are loaded, so the tax <select> can show its value.
   useEffect(() => {
-    if (product.data) reset(toForm(product.data))
-  }, [product.data, reset])
+    if (product.data && taxes.data) reset(toForm(product.data))
+  }, [product.data, taxes.data, reset])
 
   const onSubmit = handleSubmit(async (f) => {
     const body = {
@@ -116,7 +117,7 @@ export function ProductFormPage() {
     }
   }
 
-  if (!isNew && product.isLoading) return <Spinner />
+  if ((!isNew && product.isLoading) || taxes.isLoading) return <Spinner />
   if (!isNew && product.isError) return <ErrorState error={product.error} onRetry={() => product.refetch()} />
 
   const sales = Number(watch('salesPrice')) || 0

@@ -3,6 +3,9 @@
 
 generator client {
   provider = "prisma-client-js"
+  // Lets nested includes load in ONE SQL query (LATERAL joins) instead of one query per relation.
+  // With ~65 ms per round trip to the hosted database this is the difference between ~1.6 s and ~0.2 s.
+  previewFeatures = ["relationJoins"]
 }
 
 datasource db {
@@ -152,6 +155,7 @@ model Tax {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   products          Product[]
+  plans             RecurringPlan[]
   subscriptionLines SubscriptionLine[]
 
   @@map("taxes")
@@ -202,6 +206,7 @@ model RecurringPlan {
   id              Int           @id @default(autoincrement())
   name            String
   price           Int           @default(0) // recurring base fee per period
+  taxId           Int?          @map("tax_id") // tax applied to the base fee
   billingPeriod   BillingPeriod @map("billing_period")
   billingInterval Int           @default(1) @map("billing_interval")
   minQuantity     Int           @default(1) @map("min_quantity")
@@ -216,6 +221,7 @@ model RecurringPlan {
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
 
+  tax           Tax?                @relation(fields: [taxId], references: [id])
   templates     QuotationTemplate[]
   subscriptions Subscription[]
 
