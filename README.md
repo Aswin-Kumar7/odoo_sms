@@ -166,6 +166,46 @@ npm run dev                                          # API → http://localhost:
 cd ../client && npm install && npm run dev           # App → http://localhost:5173
 ```
 
+### Environment (`server/.env`)
+
+Copy `server/.env.example` to `server/.env` and fill in:
+
+```env
+# PostgreSQL connection used by the app (any Postgres 14+; local example shown)
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/brightloop?connection_limit=5"
+# Connection used by Prisma migrations (usually the same database)
+DIRECT_URL="postgresql://postgres:postgres@localhost:5432/brightloop"
+
+PORT=4000
+CLIENT_URL="http://localhost:5173"                 # used for CORS and links in emails
+JWT_SECRET="replace-with-a-random-string-of-32-plus-chars"
+JWT_EXPIRES_IN="8h"
+
+# Admin account created by `npm run seed`
+SEED_ADMIN_EMAIL="admin@brightloop.test"
+SEED_ADMIN_PASSWORD="Admin@12345"
+
+# Optional SMTP; leave SMTP_HOST empty to print emails to the API console
+SMTP_HOST=""
+SMTP_PORT="587"
+SMTP_USER=""
+SMTP_PASS=""
+MAIL_FROM="Brightloop Billing <billing@brightloop.test>"
+
+# Daily billing job (cron, UTC)
+BILLING_CRON_ENABLED="true"
+BILLING_CRON="5 0 * * *"
+```
+
+| Variable | Required | Purpose |
+|---|:-:|---|
+| `DATABASE_URL`, `DIRECT_URL` | ✅ | PostgreSQL connections for the app and for migrations |
+| `JWT_SECRET` | ✅ | Signs session cookies; at least 32 characters |
+| `PORT`, `CLIENT_URL` | — | API port and the app's URL (CORS, email links) |
+| `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` | — | First admin login created by the seed |
+| `SMTP_*`, `MAIL_FROM` | — | Real email delivery for password resets and invoices |
+| `BILLING_CRON_ENABLED`, `BILLING_CRON` | — | Turn the daily billing run on or off and set its schedule |
+
 | Command (in `server/`) | Purpose |
 |---|---|
 | `npm test` | Unit tests: pricing, discounts, billing periods, state machine |

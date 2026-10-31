@@ -1,0 +1,8 @@
+#!/bin/sh
+# Same checks as CI, run before every commit. Enable once with: git config core.hooksPath .githooks
+set -e
+echo "pre-commit: API typecheck + unit tests"
+(cd server && npm run --silent typecheck && npx vitest run --reporter=dot)
+echo "pre-commit: client build"
+(cd client && npm run --silent build > /dev/null)
+echo "pre-commit: all checks passed"
